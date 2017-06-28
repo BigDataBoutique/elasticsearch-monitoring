@@ -4,6 +4,8 @@ This repository contains everything required for end-to-end thorough monitoring 
 
 Elasticsearch Monitoring was crafted and is continually being updated and improved based on experience with debugging and stabilizing many Elasticsearch clusters world-wide.
 
+<img width="1237" alt="Elasticsearch monitoring with Grafana" src="https://user-images.githubusercontent.com/212252/27615380-63111928-5bb0-11e7-8857-48f041950f3f.png">
+
 ## Gathering metrics
 
 ### Using X-Pack Monitoring
