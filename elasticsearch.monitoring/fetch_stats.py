@@ -48,11 +48,11 @@ cluster_uuid = None
 
 # Elasticsearch cluster to monitor
 elasticCluster = os.environ.get('ES_METRICS_CLUSTER_URL', 'http://localhost:9200/')
-interval = int(os.environ.get('ES_METRICS_INTERVAL', '1'))
+interval = int(os.environ.get('ES_METRICS_INTERVAL', '10'))
 
 # Elasticsearch Cluster to Send metrics to
 monitoringCluster = os.environ.get('ES_METRICS_MONITORING_CLUSTER_URL', 'http://localhost:9200/')
-indexPrefix = os.environ.get('ES_METRICS_INDEX_NAME', 'monitoring-test')
+indexPrefix = os.environ.get('ES_METRICS_INDEX_NAME', '.monitoring-es-2-')
 
 def fetch_cluster_health(base_url='http://localhost:9200/'):
     utc_datetime = datetime.datetime.utcnow()
