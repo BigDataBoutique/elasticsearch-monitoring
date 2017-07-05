@@ -143,7 +143,6 @@ def create_templates():
             with open(os.path.join(working_dir, 'templates', filename)) as query_base:
                 template = query_base.read()
                 template = template.replace('{{INDEX_PREFIX}}', indexPrefix + '*').strip()
-                # print template
                 templates_response = requests.put(monitoringCluster + '_template/' + filename[:-5], data = template)
                 assert_http_status(templates_response)
 
@@ -163,7 +162,17 @@ def into_signalfx(sfx_key, cluster_health, node_stats):
             flattened = flatten_json(node['node_stats'][s])
             for k,v in flattened.items():
                 if isinstance(v, (int, float)) and not isinstance(v, types.BooleanType):
-                    ingest.send(gauges=[{"metric": 'elasticsearch.node.' + s + '.' + k, "value": v, "dimensions": {'node_name': source_node.get('name'),'node_host': source_node.get('host'), 'attribute': s}}])
+                    ingest.send(gauges=[{"metric": 'elasticsearch.node.' + s + '.' + k, "value": v,
+                                         "dimensions": {
+                                             'cluster_uuid': node.get('cluster_uuid'),
+                                             'cluster_name': node.get('cluster_name'),
+                                             'node_name': source_node.get('name'),
+                                             'node_host': source_node.get('host'),
+                                             'node_host': source_node.get('ip'),
+                                             'node_uuid': source_node.get('uuid'),
+                                             'cluster_name': source_node.get('uuid'),
+                                             }
+                                         }])
     ingest.stop()
 
 def into_elasticsearch(monitor_host, cluster_health, node_stats):
@@ -187,6 +196,8 @@ def into_elasticsearch(monitor_host, cluster_health, node_stats):
 @click.argument('monitor', default='elasticsearch')
 @click.argument('cluster-host', default='http://localhost:9200/')
 def main(interval, cluster_host, monitor, monitor_host):
+    global cluster_uuid
+
     click.echo('Monitoring %s into %s at %s' % (cluster_host, monitor, monitor_host))
 
     response = requests.get(elasticCluster)
