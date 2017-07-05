@@ -146,11 +146,21 @@ def create_templates():
                 templates_response = requests.put(monitoringCluster + '_template/' + filename[:-5], data = template)
                 assert_http_status(templates_response)
 
+
+def poll_metrics(cluster_host, monitor, monitor_host):
+    cluster_health, node_stats = get_all_data(cluster_host)
+    if monitor == 'elasticsearch':
+        into_elasticsearch(monitor_host, cluster_health, node_stats)
+    elif monitor == 'signalfx':
+        into_signalfx(monitor_host, cluster_health, node_stats)
+
+
 def get_all_data(cluster_host):
     cluster_health = fetch_cluster_health(cluster_host)
     node_stats = fetch_nodes_stats(cluster_host)
     # TODO generate cluster_state documents
     return cluster_health, node_stats
+
 
 def into_signalfx(sfx_key, cluster_health, node_stats):
     import signalfx
@@ -192,11 +202,14 @@ def into_elasticsearch(monitor_host, cluster_health, node_stats):
 
 @click.command()
 @click.option('--interval', default=10, help='Interval (in seconds) to run this')
+@click.option('--index-prefix', default='.monitoring-es-2-', help='Index prefix for Elastic monitor')
 @click.argument('monitor-host')
 @click.argument('monitor', default='elasticsearch')
 @click.argument('cluster-host', default='http://localhost:9200/')
-def main(interval, cluster_host, monitor, monitor_host):
-    global cluster_uuid
+def main(interval, cluster_host, monitor, monitor_host, index_prefix):
+    global cluster_uuid, indexPrefix
+
+    indexPrefix = index_prefix or indexPrefix
 
     click.echo('Monitoring %s into %s at %s' % (cluster_host, monitor, monitor_host))
 
@@ -210,7 +223,7 @@ def main(interval, cluster_host, monitor, monitor_host):
 
     recurring = interval > 0
     if not recurring:
-        main()
+        poll_metrics(cluster_host, monitor, monitor_host)
     else:
         try:
             nextRun = 0
@@ -219,11 +232,7 @@ def main(interval, cluster_host, monitor, monitor_host):
                     nextRun = time.time() + interval
                     now = time.time()
 
-                    cluster_health, node_stats = get_all_data(cluster_host)
-                    if monitor == 'elasticsearch':
-                        into_elasticsearch(monitor_host, cluster_health, node_stats)
-                    elif monitor == 'signalfx':
-                        into_signalfx(monitor_host, cluster_health, node_stats)
+                    poll_metrics(cluster_host, monitor, monitor_host)
 
                     elapsed = time.time() - now
                     print "Total Elapsed Time: %s" % elapsed
