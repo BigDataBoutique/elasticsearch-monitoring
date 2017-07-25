@@ -37,3 +37,9 @@ In this repository there is also a Grafana dashboard you can import - `Elasticse
 You will need to create an Elasticsearch data source that is pointing to the cluster you use for monitoring, and set the index pattern to be `[.monitoring-es-2-]YYYY.MM.DD` and set Pattern to daily. The timestamp field is called `timestamp`. For more details see the official documentation here: http://docs.grafana.org/features/datasources/elasticsearch/.
 
 For guidance on importing the dashboard see the official Grafana documentation: http://docs.grafana.org/reference/export_import/#importing-a-dashboard.
+
+## Development and testing
+
+```bash
+docker run -p 9200:9200 -e "http.host=0.0.0.0" -e "transport.host=127.0.0.1" -e "xpack.security.enabled=false" -e "discovery.zen.minimum_master_nodes=1" docker.elastic.co/elasticsearch/elasticsearch:5.5.0
+```
