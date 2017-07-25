@@ -133,9 +133,22 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
 
     return metric_docs
 
-def fetch_index_stats():
-    # TODO
-    pass
+def fetch_index_stats(base_url='http://localhost:9200/'):
+    response = requests.get(base_url + '_stats')
+    r_json = response.json()
+    # cluster_name = r_json['cluster_name']
+
+    metric_docs = []
+
+    # we are opting to not use the timestamp as reported by the actual node
+    # to be able to better sync the various metrics collected
+    utc_datetime = datetime.datetime.utcnow()
+
+    for index_name, index in r_json['indices'].items():
+        print index_name, ', '.join(index.keys())
+
+    return []
+
 
 def create_templates():
     for filename in os.listdir(os.path.join(working_dir, 'templates')):
@@ -158,6 +171,7 @@ def poll_metrics(cluster_host, monitor, monitor_host):
 def get_all_data(cluster_host):
     cluster_health = fetch_cluster_health(cluster_host)
     node_stats = fetch_nodes_stats(cluster_host)
+    indices_stats = fetch_index_stats(cluster_host)
     # TODO generate cluster_state documents
     return cluster_health, node_stats
 
