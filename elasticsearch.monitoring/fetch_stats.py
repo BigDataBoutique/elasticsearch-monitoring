@@ -69,7 +69,7 @@ cluster_uuid = None
 monitoringCluster = os.environ.get('ES_METRICS_MONITORING_CLUSTER_URL', 'http://localhost:9200/')
 if not monitoringCluster.endswith("/"):
     monitoringCluster = monitoringCluster + '/'
-indexPrefix = os.environ.get('ES_METRICS_INDEX_NAME', '.monitoring-es-2-')
+indexPrefix = os.environ.get('ES_METRICS_INDEX_NAME', '.monitoring-es-7-')
 
 def fetch_cluster_health(base_url='http://localhost:9200/'):
     utc_datetime = datetime.datetime.utcnow()
@@ -197,8 +197,8 @@ def into_elasticsearch(monitor_host, cluster_health, node_stats):
     utc_datetime = datetime.datetime.utcnow()
     index_name = indexPrefix + str(utc_datetime.strftime('%Y.%m.%d'))
 
-    cluster_health_data = ['{"index":{"_index":"'+index_name+'","_type":"doc"}}\n' + json.dumps(with_type(o, 'cluster_health'))+'\n' for o in cluster_health]
-    node_stats_data = ['{"index":{"_index":"'+index_name+'","_type":"doc"}}\n' + json.dumps(with_type(o, 'node_stats'))+'\n' for o in node_stats]
+    cluster_health_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'cluster_health'))+'\n' for o in cluster_health]
+    node_stats_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'node_stats'))+'\n' for o in node_stats]
 
     data = node_stats_data + cluster_health_data
 
@@ -223,7 +223,7 @@ def with_type(o, _type):
 @click.command()
 @click.option('--interval', default=10, help='Interval (in seconds) to run this')
 @click.option('--index-prefix', default='.monitoring-es-2-', help='Index prefix for Elastic monitor')
-@click.argument('monitor-host')
+@click.argument('monitor-host', default=monitoringCluster)
 @click.argument('monitor', default='elasticsearch')
 @click.argument('cluster-host', default='http://localhost:9200/')
 def main(interval, cluster_host, monitor, monitor_host, index_prefix):

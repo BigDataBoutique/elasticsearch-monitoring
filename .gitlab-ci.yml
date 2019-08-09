@@ -1,0 +1,39 @@
+image: docker:stable
+
+stages:
+  - package
+  - release
+
+variables:
+  STAGING_REGISTRY: "registry.gitlab.com"
+  CONTAINER_TEST_IMAGE: ${STAGING_REGISTRY}/BigDataBoutique/${CI_PROJECT_NAME}:commit-${CI_COMMIT_SHA}
+
+package:
+  stage: package
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $STAGING_REGISTRY
+  script:
+    - docker build --tag $CONTAINER_TEST_IMAGE .
+    - docker push $CONTAINER_TEST_IMAGE
+
+release:
+  stage: release
+  cache: {}
+  services:
+    - docker:dind
+  variables:
+    GIT_STRATEGY: none
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $STAGING_REGISTRY
+  script:
+    - IMAGE_NAME=${STAGING_REGISTRY}/BigDataBoutique/${CI_PROJECT_NAME}:`date '+%Y-%m-%d-%H%M'`-${CI_COMMIT_SHA:0:9}
+    - echo $IMAGE_NAME
+    - docker pull $CONTAINER_TEST_IMAGE
+    - docker tag $CONTAINER_TEST_IMAGE $IMAGE_NAME
+    - docker push $IMAGE_NAME
+    - docker tag $CONTAINER_TEST_IMAGE ${STAGING_REGISTRY}/BigDataBoutique/${CI_PROJECT_NAME}:latest
+    - docker push ${STAGING_REGISTRY}/BigDataBoutique/${CI_PROJECT_NAME}:latest
+  only:
+    - master
