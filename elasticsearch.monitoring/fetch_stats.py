@@ -83,7 +83,7 @@ def fetch_cluster_health(base_url='http://localhost:9200/'):
         print("[%s] Timeout received on trying to get cluster health" % (time.strftime("%Y-%m-%d %H:%M:%S")))
         return []
 
-node_stats_to_collect = ["indices", "os", "process", "jvm", "thread_pool", "fs", "transport", "http", "script"]
+node_stats_to_collect = ["indices", "os", "process", "jvm", "thread_pool", "fs", "transport", "http", "breakers", "script"]
 def fetch_nodes_stats(base_url='http://localhost:9200/'):
     metric_docs = []
 
@@ -107,6 +107,7 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
                     "transport_address": node['transport_address'],
                     "ip": node['ip'],
                     "name": node['name'],
+                    "roles": node.get('roles'),
                     "attributes": {} # TODO do we want to bring anything here?
                 },
             }
@@ -222,7 +223,7 @@ def with_type(o, _type):
 
 @click.command()
 @click.option('--interval', default=10, help='Interval (in seconds) to run this')
-@click.option('--index-prefix', default='.monitoring-es-2-', help='Index prefix for Elastic monitor')
+@click.option('--index-prefix', default='', help='Index prefix for Elastic monitor')
 @click.argument('monitor-host', default=monitoringCluster)
 @click.argument('monitor', default='elasticsearch')
 @click.argument('cluster-host', default='http://localhost:9200/')

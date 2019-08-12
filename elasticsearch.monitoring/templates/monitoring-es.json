@@ -1075,6 +1075,9 @@
 					"transport_address": {
 						"type": "keyword"
 					},
+					"roles": {
+						"type": "keyword"
+					},
 					"uuid": {
 						"type": "keyword"
 					}
