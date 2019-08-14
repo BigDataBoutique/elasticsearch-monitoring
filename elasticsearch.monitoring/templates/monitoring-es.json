@@ -8,7 +8,7 @@
 		"number_of_replicas": "1"
 	  }
 	},
-	"mappings": {
+	"mappings":{
 		"dynamic": "false",
 		"date_detection": false,
 		"properties": {
@@ -630,6 +630,25 @@
 							},
 							"io_stats": {
 								"properties": {
+									"devices": {
+										"properties": {
+											"operations": {
+												"type": "long"
+											},
+											"read_kilobytes": {
+												"type": "long"
+											},
+											"read_operations": {
+												"type": "long"
+											},
+											"write_kilobytes": {
+												"type": "long"
+											},
+											"write_operations": {
+												"type": "long"
+											}
+										}
+									},
 									"total": {
 										"properties": {
 											"operations": {
@@ -649,6 +668,7 @@
 											}
 										}
 									}
+
 								}
 							},
 							"total": {
@@ -659,17 +679,31 @@
 									"free_in_bytes": {
 										"type": "long"
 									},
+									"spins":{
+										"type": "boolean"
+									},
 									"total_in_bytes": {
 										"type": "long"
 									}
+
 								}
 							}
 						}
 					},
 					"indices": {
 						"properties": {
+							"completion" : {
+								"properties":{
+									"size_in_bytes" : {
+										"type": "long"
+									}
+								}
+							},
 							"docs": {
 								"properties": {
+									"deleted": {
+										"type": "long"
+									},
 									"count": {
 										"type": "long"
 									}
@@ -685,12 +719,68 @@
 									}
 								}
 							},
+							"flush" : {
+								"properties":{
+					        "total" : {
+										"type": "long"
+									},
+					        "total_time_in_millis" : {
+										"type": "long"
+									}
+								}
+				      },
+							"get" : {
+								"properties":{
+									"current" : {
+										"type": "long"
+									},
+										"exists_time_in_millis" : {
+										"type": "long"
+									},
+					        "exists_total" : {
+										"type": "long"
+									},
+					        "time_in_millis" : {
+										"type": "long"
+									},
+					        "missing_time_in_millis" : {
+										"type": "long"
+									},
+				        "missing_total" : {
+										"type": "long"
+									},
+					        "total" : {
+										"type": "long"
+									}
+								}
+				      },
 							"indexing": {
 								"properties": {
+									"delete_current" : {
+										"type": "long"
+									},
+									"delete_time_in_millis" : {
+										"type": "long"
+									},
+									"delete_total" : {
+										"type": "long"
+									},
+									"index_current" : {
+										"type": "long"
+									},
+									"index_failed" : {
+										"type": "long"
+									},
 									"index_time_in_millis": {
 										"type": "long"
 									},
 									"index_total": {
+										"type": "long"
+									},
+									"is_throttled" : {
+										"type": "boolean"
+									},
+									"noop_update_total" : {
 										"type": "long"
 									},
 									"throttle_time_in_millis": {
@@ -698,8 +788,52 @@
 									}
 								}
 							},
+							"merges" : {
+								"properties":{
+									"current" : {
+										"type": "long"
+									},
+					        "current_docs" : {
+										"type": "long"
+									},
+									"current_size_in_bytes" : {
+										"type": "long"
+									},
+								  "total" : {
+									 	"type": "long"
+									},
+
+									"total_auto_throttle_in_bytes" : {
+										"type": "long"
+									},
+									"total_docs" : {
+										"type": "long"
+									},
+									"total_size_in_bytes" : {
+										"type": "long"
+									},
+									"total_time_in_millis" : {
+										"type": "long"
+									},
+
+									"total_stopped_time_in_millis" : {
+										"type": "long"
+									},
+									"total_throttled_time_in_millis" : {
+										"type": "long"
+									}
+
+
+				      }
+							},
 							"query_cache": {
 								"properties": {
+									"cache_count" : {
+										"type": "long"
+									},
+					        "cache_size" : {
+										"type": "long"
+									},
 									"evictions": {
 										"type": "long"
 									},
@@ -711,9 +845,38 @@
 									},
 									"miss_count": {
 										"type": "long"
+									},
+									"total_count" : {
+										"type": "long"
 									}
 								}
 							},
+							"recovery" : {
+								"properties":{
+					        "current_as_source" : {
+										"type": "long"
+									},
+									"current_as_target" : {
+										"type": "long"
+									},
+					        "throttle_time_in_millis" : {
+										"type": "long"
+									}
+								}
+				      },
+							"refresh" : {
+							  "properties":{
+  				        "listeners" : {
+  									"type": "long"
+  								},
+  								"total" : {
+  									"type": "long"
+  								},
+  				        "total_time_in_millis" : {
+  									"type": "long"
+  								}
+							  }
+				      },
 							"request_cache": {
 								"properties": {
 									"evictions": {
@@ -732,10 +895,43 @@
 							},
 							"search": {
 								"properties": {
+									"fetch_current" : {
+										"type": "long"
+									},
+									"fetch_time_in_millis" : {
+										"type": "long"
+									},
+									"fetch_total" : {
+										"type": "long"
+									},
+									"open_contexts" : {
+										"type": "long"
+									},
+									"query_current" : {
+										"type": "long"
+									},
 									"query_time_in_millis": {
 										"type": "long"
 									},
 									"query_total": {
+										"type": "long"
+									},
+									"scroll_current" : {
+										"type": "long"
+									},
+									"scroll_time_in_millis" : {
+										"type": "long"
+									},
+									"scroll_total" : {
+										"type": "long"
+									},
+									"suggest_current" : {
+										"type": "long"
+									},
+									"suggest_time_in_millis" : {
+										"type": "long"
+									},
+									"suggest_total" : {
 										"type": "long"
 									}
 								}
@@ -752,6 +948,9 @@
 										"type": "long"
 									},
 									"index_writer_memory_in_bytes": {
+										"type": "long"
+									},
+									"max_unsafe_auto_id_timestamp" : {
 										"type": "long"
 									},
 									"memory_in_bytes": {
@@ -775,14 +974,51 @@
 									"version_map_memory_in_bytes": {
 										"type": "long"
 									}
+
 								}
 							},
-							"store": {
-								"properties": {
-									"size_in_bytes": {
+							"store" : {
+							  "properties":{
+  								"size_in_bytes" : {
+  									"type": "long"
+  								},
+  								"throttle_time_in_millis" : {
+  									"type": "long"
+  								}
+							  }
+							},
+							"translog" : {
+								"properties":{
+									"operations" : {
+										"type": "long"
+									},
+					        "size_in_bytes" : {
 										"type": "long"
 									}
 								}
+				      },
+							"warmer" : {
+								"properties":{
+					        "current" : {
+										"type": "long"
+									},
+					        "total" : {
+										"type": "long"
+									},
+					        "total_time_in_millis" : {
+										"type": "long"
+									}
+								}
+				      }
+						}
+					},
+					"http":{
+						"properties":{
+							"current_open":{
+								"type": "long"
+							},
+							"total_opened":{
+								"type":"long"
 							}
 						}
 					},
@@ -826,8 +1062,41 @@
 									},
 									"heap_used_percent": {
 										"type": "half_float"
+									},
+					        "non_heap_committed_in_bytes" : {
+										"type": "long"
+									},
+					        "heap_committed_in_bytes" : {
+										"type": "long"
+									},
+					        "non_heap_used_in_bytes" : {
+										"type": "long"
 									}
 								}
+								},
+							"classes" : {
+							  "properties":{
+  								"current_loaded_count" : {
+  									"type": "long"
+  								},
+  								"total_unloaded_count" : {
+  									"type": "long"
+  								},
+  								"total_loaded_count" : {
+  									"type": "long"
+  								}
+							  }
+							},
+							"threads" : {
+							  "properties":{
+  								"count" : {
+  									"type": "long"
+  								},
+  								"peak_count" : {
+  									"type": "long"
+  								}
+
+							  }
 							}
 						}
 					},
@@ -906,8 +1175,43 @@
 												"type": "half_float"
 											}
 										}
+									},
+									"percent":{
+										"type": "half_float"
 									}
 								}
+							},
+							"mem" : {
+							  "properties":{
+  								"free_in_bytes" : {
+  									"type": "long"
+  								},
+  								"free_percent" : {
+  									"type": "half_float"
+  								},
+  								"total_in_bytes" : {
+  									"type": "long"
+  								},
+  								"used_percent" : {
+  									"type": "half_float"
+  								},
+  								"used_in_bytes" : {
+  									"type": "long"
+  								}
+							  }
+							},
+							"swap" : {
+							  "properties":{
+  								"free_in_bytes" : {
+  									"type": "long"
+  								},
+  								"total_in_bytes" : {
+  									"type": "long"
+  								},
+  								"used_in_bytes" : {
+  									"type": "long"
+  								}
+							  }
 							}
 						}
 					},
@@ -925,6 +1229,35 @@
 							},
 							"open_file_descriptors": {
 								"type": "long"
+							}
+						}
+					},
+					"script":{
+						"properties":{
+							"cache_evictions":{
+								"type": "long"
+							},
+							"compilations":{
+								"type":"long"
+							}
+						}
+					},
+					"transport":{
+						"properties":{
+							"rx_count":{
+								"type":"long"
+							},
+							"rx_size_in_bytes":{
+								"type": "long"
+							},
+							"server_open":{
+								"type":"long"
+							},
+							"tx_size_in_bytes":{
+								"type":"long"
+							},
+							"tx_count":{
+								"type":"long"
 							}
 						}
 					},
@@ -1094,5 +1427,5 @@
 				"type": "keyword"
 			}
 		}
-	}
+  }
 }
