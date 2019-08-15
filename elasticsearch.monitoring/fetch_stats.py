@@ -139,9 +139,11 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
 
     return metric_docs
 
+
 def fetch_index_stats():
     # TODO
     pass
+
 
 def create_templates():
     for filename in os.listdir(os.path.join(working_dir, 'templates')):
@@ -149,7 +151,7 @@ def create_templates():
             with open(os.path.join(working_dir, 'templates', filename)) as query_base:
                 template = query_base.read()
                 template = template.replace('{{INDEX_PREFIX}}', indexPrefix + '*').strip()
-                templates_response = requests.put(monitoringCluster + '_template/' + filename[:-5],
+                templates_response = requests.put(monitoringCluster + '_template/' + indexPrefix.replace('.', '') + filename[:-5],
                                                   data = template,
                                                   headers={'Content-Type': 'application/json;charset=UTF-8'},
                                                   timeout=(30, 30))
