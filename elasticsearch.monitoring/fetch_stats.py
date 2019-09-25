@@ -111,7 +111,8 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
                     "attributes": {} # TODO do we want to bring anything here?
                 },
             }
-            is_master = ('roles' in node and 'master' in node['roles']) or ('attributes' in node and (node['attributes']['master'] == 'true' or node['attributes']['master'] == True))
+            is_master = ('roles' in node and 'master' in node['roles']) or ('attributes' in node and 'master' in node['attributes'] and (
+                        node['attributes']['master'] == 'true' or node['attributes']['master'] == True))
             node_data["node_stats"] = {
                 "node_id": node_id,
                 "node_master": is_master,
