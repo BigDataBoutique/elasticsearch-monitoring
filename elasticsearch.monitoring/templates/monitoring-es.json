@@ -1111,6 +1111,9 @@
 					},
 					"os": {
 						"properties": {
+							"load_average" : {
+								"type": "half_float"
+							},
 							"cgroup": {
 								"properties": {
 									"cpu": {
