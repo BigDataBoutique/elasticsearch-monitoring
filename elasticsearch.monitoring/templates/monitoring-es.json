@@ -1428,7 +1428,10 @@
 			},
 			"type": {
 				"type": "keyword"
-			}
+			},
+			"cluster_name": {
+				"type": "keyword"
+			}			
 		}
   }
 }
