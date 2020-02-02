@@ -15,6 +15,7 @@ Elastic's X-Pack Monitoring is provided with an agent that is shipping metrics t
 ### Using provided script
 
 Another approach is to use the elasticsearch.monitoring script provided with this repository, which you can find at `elasticsearch.monitoring/fetch_stats.py`.
+You can either do this directly with python, or use the Dockerfile in this repository. See instructions for docker use below.
 Use environment variables or program arguments to set the URLs for the monitored cluster and the cluster that is being used for monitoring.
 By default they are both configured to be http://localhost:9200/ , make sure to use the format http://host:port/ .
 
@@ -35,6 +36,17 @@ At launch, you can see a printed message verifying the script is drawing data fr
 To further validate that, you can also check the values of field source_node.host in the index with the monitoring data.
 
 *NOTE:* If the cluster you are using for monitoring is 2.x, you will need to edit the template files (`elasticsearch.monitoring/templates/*`) and change all occurences of `"type": "keyword"` with `"type": "string", "index": "not_analyzed"`.
+
+### Docker setup
+
+`sudo apt update
+sudo apt install docker.io
+sudo docker build . -t fetch_stats
+sudo docker run --net=host --env ES_METRICS_CLUSTER_URL=http://localhost:9200/ fetch_stats /app/elasticsearch.monitoring/fetch_stats.py`
+
+where ES_METRICS_CLUSTER_URL is setup to the monitored ES, and obviously adding additional variables if required.
+Run once in the foreground to validate that the script works correctly, then use -d in the docker run to run in background.
+
 
 ## Visualizing with Grafana
 
