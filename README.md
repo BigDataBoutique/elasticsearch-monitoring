@@ -39,10 +39,10 @@ To further validate that, you can also check the values of field source_node.hos
 
 ### Docker setup
 
-`sudo apt update
-sudo apt install docker.io
-sudo docker build . -t fetch_stats
-sudo docker run --net=host --env ES_METRICS_CLUSTER_URL=http://localhost:9200/ fetch_stats /app/elasticsearch.monitoring/fetch_stats.py`
+`sudo apt update`
+`sudo apt install docker.io`
+`sudo docker build . -t fetch_stats`
+`sudo docker run --net=host --env ES_METRICS_CLUSTER_URL=http://localhost:9200/ fetch_stats /app/elasticsearch.monitoring/fetch_stats.py`
 
 where ES_METRICS_CLUSTER_URL is setup to the monitored ES, and obviously adding additional variables if required.
 Run once in the foreground to validate that the script works correctly, then use -d in the docker run to run in background.
