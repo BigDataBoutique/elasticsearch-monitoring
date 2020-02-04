@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1578925153865,
+  "iteration": 1580732890468,
   "links": [],
   "panels": [
     {
@@ -95,14 +95,14 @@
           ],
           "metrics": [
             {
-              "field": "source_node.host",
+              "field": "",
               "id": "1",
               "meta": {},
               "settings": {},
               "type": "cardinality"
             }
           ],
-          "query": "cluster_name:$cluster",
+          "query": "cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -118,7 +118,7 @@
           "value": "null"
         }
       ],
-      "valueName": "current"
+      "valueName": "avg"
     },
     {
       "cacheTimeout": null,
@@ -196,14 +196,14 @@
           ],
           "metrics": [
             {
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "1",
               "meta": {},
               "settings": {},
               "type": "cardinality"
             }
           ],
-          "query": "node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND cluster_name:$cluster",
+          "query": "node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -220,6 +220,55 @@
         }
       ],
       "valueName": "avg"
+    },
+    {
+      "columns": [
+        {
+          "text": "cluster_stats.status",
+          "value": "cluster_stats.status"
+        }
+      ],
+      "datasource": null,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 6,
+        "y": 0
+      },
+      "id": 43,
+      "options": {},
+      "pageSize": null,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [],
+      "targets": [
+        {
+          "bucketAggs": [],
+          "metrics": [
+            {
+              "field": "select field",
+              "id": "1",
+              "meta": {},
+              "settings": {
+                "size": 1
+              },
+              "type": "raw_document"
+            }
+          ],
+          "query": "_exists_:cluster_state.status AND cluster_uuid:$cluster",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Cluster Status",
+      "transform": "json",
+      "type": "table"
     },
     {
       "collapsed": false,
@@ -282,11 +331,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} indexing ops",
+          "alias": "{{source_node.name}} indexing ops",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -325,16 +374,16 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND  source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND  source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         },
         {
-          "alias": "{{source_node.host}} indexing time",
+          "alias": "{{source_node.name}} indexing time",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -373,7 +422,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND  source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND  source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         }
@@ -467,11 +516,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} queries",
+          "alias": "{{source_node.name}} queries",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -510,16 +559,16 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND  source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND  source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         },
         {
-          "alias": "{{source_node.host}} queries time",
+          "alias": "{{source_node.name}} queries time",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -558,7 +607,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND  source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND  source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -693,7 +742,7 @@
               "type": "derivative"
             }
           ],
-          "query": "cluster_name:$cluster",
+          "query": "cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         }
@@ -829,7 +878,7 @@
               "type": "derivative"
             }
           ],
-          "query": "cluster_name:$cluster",
+          "query": "cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         }
@@ -931,11 +980,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} load avg 1m",
+          "alias": "{{source_node.name}} load avg 1m",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -966,16 +1015,16 @@
               "type": "max"
             }
           ],
-          "query": "source_node.host:($host) AND cluster_name:$cluster",
+          "query": "source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         },
         {
-          "alias": "{{source_node.host}} load avg 5m",
+          "alias": "{{source_node.name}} load avg 5m",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -1005,16 +1054,16 @@
               "type": "max"
             }
           ],
-          "query": "source_node.host:($host) AND cluster_name:$cluster",
+          "query": "source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         },
         {
-          "alias": "{{source_node.host}} load avg 15m",
+          "alias": "{{source_node.name}} load avg 15m",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -1044,7 +1093,7 @@
               "type": "max"
             }
           ],
-          "query": "source_node.host:($host) AND cluster_name:$cluster",
+          "query": "source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "C",
           "timeField": "timestamp"
         }
@@ -1132,11 +1181,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} writes / sec",
+          "alias": "{{source_node.name}} writes / sec",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -1166,7 +1215,7 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -1257,7 +1306,7 @@
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -1295,7 +1344,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -1383,11 +1432,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} writes / sec",
+          "alias": "{{source_node.name}} writes / sec",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -1426,7 +1475,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -1528,11 +1577,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} old GC",
+          "alias": "{{source_node.name}} old GC",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -1571,16 +1620,16 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         },
         {
-          "alias": "{{source_node.host}} young GC",
+          "alias": "{{source_node.name}} young GC",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "3",
               "settings": {
                 "min_doc_count": 1,
@@ -1620,7 +1669,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         }
@@ -1708,11 +1757,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} old GC",
+          "alias": "{{source_node.name}} old GC",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -1751,16 +1800,16 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         },
         {
-          "alias": "{{source_node.host}} young GC",
+          "alias": "{{source_node.name}} young GC",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "3",
               "settings": {
                 "min_doc_count": 1,
@@ -1800,7 +1849,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         }
@@ -1888,11 +1937,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}}",
+          "alias": "{{source_node.name}}",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -1922,7 +1971,7 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -2029,11 +2078,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} queue",
+          "alias": "{{source_node.name}} queue",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "6",
               "settings": {
                 "min_doc_count": 1,
@@ -2063,16 +2112,16 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         },
         {
-          "alias": "{{source_node.host}} rejections",
+          "alias": "{{source_node.name}} rejections",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "6",
               "settings": {
                 "min_doc_count": 1,
@@ -2102,7 +2151,7 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         }
@@ -2195,11 +2244,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} queue",
+          "alias": "{{source_node.name}} queue",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "6",
               "settings": {
                 "min_doc_count": 1,
@@ -2229,16 +2278,16 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         },
         {
-          "alias": "{{source_node.host}} rejections",
+          "alias": "{{source_node.name}} rejections",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "6",
               "settings": {
                 "min_doc_count": 1,
@@ -2277,7 +2326,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         }
@@ -2370,11 +2419,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} queue",
+          "alias": "{{source_node.name}} queue",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "6",
               "settings": {
                 "min_doc_count": 1,
@@ -2404,16 +2453,16 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         },
         {
-          "alias": "{{source_node.host}} rejections",
+          "alias": "{{source_node.name}} rejections",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "6",
               "settings": {
                 "min_doc_count": 1,
@@ -2452,7 +2501,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "B",
           "timeField": "timestamp"
         }
@@ -2558,7 +2607,7 @@
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -2597,7 +2646,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -2689,7 +2738,7 @@
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -2719,7 +2768,7 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -2811,7 +2860,7 @@
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -2850,7 +2899,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -2943,7 +2992,7 @@
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -2973,7 +3022,7 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -3065,7 +3114,7 @@
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -3104,7 +3153,7 @@
               "type": "derivative"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -3196,7 +3245,7 @@
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -3226,7 +3275,7 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -3328,11 +3377,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "{{source_node.host}} writes / sec",
+          "alias": "{{source_node.name}} writes / sec",
           "bucketAggs": [
             {
               "fake": true,
-              "field": "source_node.host",
+              "field": "source_node.name",
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
@@ -3362,7 +3411,7 @@
               "type": "max"
             }
           ],
-          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.host:($host) AND cluster_name:$cluster",
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -3410,7 +3459,7 @@
     }
   ],
   "refresh": "1m",
-  "schemaVersion": 21,
+  "schemaVersion": 22,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -3430,7 +3479,7 @@
         "multi": true,
         "name": "host",
         "options": [],
-        "query": "{\"find\": \"terms\", \"field\": \"source_node.host\"}",
+        "query": "{\"find\": \"terms\", \"field\": \"source_node.name\"}",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -3470,19 +3519,18 @@
       {
         "allValue": "*",
         "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "text": "DlLI91MxRYm9E77qZia6Fw",
+          "value": "DlLI91MxRYm9E77qZia6Fw"
         },
         "datasource": "Elasticsearch Monitor",
-        "definition": "{\"find\": \"terms\", \"field\": \"cluster_name\"}",
+        "definition": "{\"find\": \"terms\", \"field\": \"cluster_uuid\"}",
         "hide": 0,
-        "includeAll": true,
+        "includeAll": false,
         "label": "cluster",
-        "multi": true,
+        "multi": false,
         "name": "cluster",
         "options": [],
-        "query": "{\"find\": \"terms\", \"field\": \"cluster_name\"}",
+        "query": "{\"find\": \"terms\", \"field\": \"cluster_uuid\"}",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
