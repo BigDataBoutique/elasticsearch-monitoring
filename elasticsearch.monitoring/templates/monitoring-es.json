@@ -316,6 +316,9 @@
 									},
 									"query_current": {
 										"type": "long"
+									},
+									"query_count_delta": {
+										"type": "long"
 									}
 								}
 							},

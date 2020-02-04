@@ -141,11 +141,14 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
                 new_time = node_data["node_stats"]["indices"]["search"]["query_time_in_millis"]
                 query_time_current = new_time - old_time
                 node_data["node_stats"]["indices"]["search"]["query_time_current"] = query_time_current
-                query_count_current = node_data["node_stats"]["indices"]["search"]["query_current"]
-                query_count_current_old = r_json_prev['nodes'][node_id]["indices"]["search"]["query_current"]
-                query_count_current_avg = ( query_count_current + query_count_current_old ) / 2
-                if query_count_current_avg != 0:
-                    query_avg_time = query_time_current / query_count_current_avg
+                #notice that "query_current" does not deliver correct data since it counts the *currently*
+                #running queries rather than the additional queries ran
+                query_total = node_data["node_stats"]["indices"]["search"]["query_total"]
+                query_total_old = r_json_prev['nodes'][node_id]["indices"]["search"]["query_total"]
+                query_count_delta = query_total - query_total_old
+                node_data["node_stats"]["indices"]["search"]["query_count_delta"] = query_count_delta
+                if query_count_delta != 0:
+                    query_avg_time = (int)(query_time_current / query_count_delta)
                 else:
                     query_avg_time = 0
                 node_data["node_stats"]["indices"]["search"]["query_avg_time"] = query_avg_time
