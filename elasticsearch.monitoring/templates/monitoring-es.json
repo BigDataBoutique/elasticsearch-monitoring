@@ -307,6 +307,15 @@
 									},
 									"query_total": {
 										"type": "long"
+									},
+									"query_avg_time": {
+										"type": "long"
+									},
+									"query_time_current": {
+										"type": "long"
+									},
+									"query_current": {
+										"type": "long"
 									}
 								}
 							},

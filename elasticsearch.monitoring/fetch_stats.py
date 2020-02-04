@@ -13,7 +13,7 @@ import click
 import requests
 
 working_dir = os.path.dirname(os.path.realpath(__file__))
-
+r_json_prev = {}
 def merge(one, two):
     cp = one.copy()
     cp.update(two)
@@ -86,7 +86,7 @@ def fetch_cluster_health(base_url='http://localhost:9200/'):
 node_stats_to_collect = ["indices", "os", "process", "jvm", "thread_pool", "fs", "transport", "http", "breakers", "script"]
 def fetch_nodes_stats(base_url='http://localhost:9200/'):
     metric_docs = []
-
+    global r_json_prev
     try:
         response = requests.get(base_url + '_nodes/stats', timeout=(5, 5))
         r_json = response.json()
@@ -97,6 +97,7 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
         utc_datetime = datetime.datetime.utcnow()
 
         for node_id, node in r_json['nodes'].items():
+
             node_data = {
                 "timestamp": str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'),
                 "cluster_name": cluster_name,
@@ -134,10 +135,27 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
             del node_data["node_stats"]["fs"]["timestamp"]
             del node_data["node_stats"]["fs"]["data"]
 
+            # shaig 4.2 - adding data for current and average query time
+            if r_json_prev:
+                old_time = r_json_prev['nodes'][node_id]["indices"]["search"]["query_time_in_millis"]
+                new_time = node_data["node_stats"]["indices"]["search"]["query_time_in_millis"]
+                query_time_current = new_time - old_time
+                node_data["node_stats"]["indices"]["search"]["query_time_current"] = query_time_current
+                query_count_current = node_data["node_stats"]["indices"]["search"]["query_current"]
+                query_count_current_old = r_json_prev['nodes'][node_id]["indices"]["search"]["query_current"]
+                query_count_current_avg = ( query_count_current + query_count_current_old ) / 2
+                if query_count_current_avg != 0:
+                    query_avg_time = query_time_current / query_count_current_avg
+                else:
+                    query_avg_time = 0
+                node_data["node_stats"]["indices"]["search"]["query_avg_time"] = query_avg_time
+
             metric_docs.append(node_data)
     except (requests.exceptions.Timeout, socket.timeout):
         print("[%s] Timeout received on trying to get cluster health" % (time.strftime("%Y-%m-%d %H:%M:%S")))
 
+    # shaig 4.2 - adding data for current and average query time
+    r_json_prev = r_json
     return metric_docs
 
 
