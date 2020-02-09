@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1580732890468,
+  "iteration": 1581274544943,
   "links": [],
   "panels": [
     {
@@ -95,7 +95,7 @@
           ],
           "metrics": [
             {
-              "field": "",
+              "field": "source_node.host",
               "id": "1",
               "meta": {},
               "settings": {},
@@ -447,7 +447,7 @@
       },
       "yaxes": [
         {
-          "format": "reqps",
+          "format": "reqs",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -488,6 +488,7 @@
         "avg": false,
         "current": false,
         "hideEmpty": false,
+        "hideZero": false,
         "max": true,
         "min": true,
         "show": true,
@@ -524,9 +525,10 @@
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
+                "missing": null,
                 "order": "desc",
-                "orderBy": "_term",
-                "size": "0"
+                "orderBy": "1",
+                "size": "10"
               },
               "type": "terms"
             },
@@ -546,6 +548,7 @@
               "field": "node_stats.indices.search.query_total",
               "hide": true,
               "id": "1",
+              "inlineScript": null,
               "meta": {},
               "settings": {},
               "type": "max"
@@ -573,7 +576,7 @@
               "settings": {
                 "min_doc_count": 1,
                 "order": "desc",
-                "orderBy": "_term",
+                "orderBy": "1",
                 "size": "0"
               },
               "type": "terms"
@@ -632,7 +635,7 @@
       },
       "yaxes": [
         {
-          "format": "reqps",
+          "format": "reqs",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -681,7 +684,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -708,6 +711,7 @@
               "id": "4",
               "settings": {
                 "min_doc_count": 1,
+                "missing": "0",
                 "order": "desc",
                 "orderBy": "_term",
                 "size": "0"
@@ -816,7 +820,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -966,7 +970,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -1045,6 +1049,7 @@
               "type": "date_histogram"
             }
           ],
+          "hide": false,
           "metrics": [
             {
               "field": "node_stats.os.cpu.load_average.5m",
@@ -1167,7 +1172,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -1289,7 +1294,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -1330,6 +1335,7 @@
           "metrics": [
             {
               "field": "node_stats.fs.io_stats.total.read_kilobytes",
+              "hide": true,
               "id": "1",
               "meta": {},
               "settings": {},
@@ -1923,7 +1929,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -2548,6 +2554,181 @@
       }
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Elasticsearch Monitor",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 70
+      },
+      "hiddenSeries": false,
+      "id": 44,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/rejections/",
+          "yaxis": 2
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "{{source_node.name}} queue",
+          "bucketAggs": [
+            {
+              "fake": true,
+              "field": "source_node.name",
+              "id": "6",
+              "settings": {
+                "min_doc_count": 1,
+                "order": "desc",
+                "orderBy": "_term",
+                "size": "0"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "metrics": [
+            {
+              "field": "node_stats.thread_pool.get.queue",
+              "id": "5",
+              "meta": {},
+              "settings": {},
+              "type": "max"
+            }
+          ],
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
+          "refId": "A",
+          "timeField": "timestamp"
+        },
+        {
+          "alias": "{{source_node.name}} rejections",
+          "bucketAggs": [
+            {
+              "fake": true,
+              "field": "source_node.name",
+              "id": "6",
+              "settings": {
+                "min_doc_count": 1,
+                "order": "desc",
+                "orderBy": "_term",
+                "size": "0"
+              },
+              "type": "terms"
+            },
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "metrics": [
+            {
+              "field": "node_stats.thread_pool.get.rejected",
+              "hide": true,
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "max"
+            },
+            {
+              "field": "1",
+              "id": "7",
+              "meta": {},
+              "pipelineAgg": "1",
+              "settings": {},
+              "type": "derivative"
+            }
+          ],
+          "query": "type:node_stats AND node_stats.node_master:false AND node_stats.indices.docs.count:[1 TO *] AND source_node.name:($host) AND cluster_uuid:$cluster",
+          "refId": "B",
+          "timeField": "timestamp"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Thread pool: Get",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Queue",
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": "Rejections",
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
       "collapsed": false,
       "datasource": null,
       "gridPos": {
@@ -2720,7 +2901,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -2974,7 +3155,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -3227,7 +3408,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -3363,7 +3544,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -3467,9 +3648,10 @@
       {
         "allValue": "*",
         "current": {
-          "selected": false,
           "text": "All",
-          "value": "$__all"
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": "Elasticsearch Monitor",
         "definition": "",
@@ -3493,9 +3675,10 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
           "text": "All",
-          "value": "$__all"
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": "Elasticsearch Monitor",
         "definition": "",
@@ -3519,8 +3702,9 @@
       {
         "allValue": "*",
         "current": {
-          "text": "DlLI91MxRYm9E77qZia6Fw",
-          "value": "DlLI91MxRYm9E77qZia6Fw"
+          "selected": true,
+          "text": "Cn2TEmrYSqyRkY9EYMKsww",
+          "value": "Cn2TEmrYSqyRkY9EYMKsww"
         },
         "datasource": "Elasticsearch Monitor",
         "definition": "{\"find\": \"terms\", \"field\": \"cluster_uuid\"}",
@@ -3544,7 +3728,7 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
@@ -3575,5 +3759,5 @@
   "timezone": "",
   "title": "Elasticsearch Cluster Monitoring",
   "uid": "9BHh3jfmz",
-  "version": 4
+  "version": 7
 }
