@@ -70,6 +70,7 @@ monitoringCluster = os.environ.get('ES_METRICS_MONITORING_CLUSTER_URL', 'http://
 if not monitoringCluster.endswith("/"):
     monitoringCluster = monitoringCluster + '/'
 indexPrefix = os.environ.get('ES_METRICS_INDEX_NAME', '.monitoring-es-7-')
+numberOfReplicas = os.environ.get('NUMBER_OF_REPLICAS', '1')
 
 def fetch_cluster_health(base_url='http://localhost:9200/'):
     utc_datetime = datetime.datetime.utcnow()
@@ -173,6 +174,7 @@ def create_templates():
             with open(os.path.join(working_dir, 'templates', filename)) as query_base:
                 template = query_base.read()
                 template = template.replace('{{INDEX_PREFIX}}', indexPrefix + '*').strip()
+                template = template.replace('{{NUMBER_OF_REPLICAS}}', numberOfReplicas).strip()
                 templates_response = requests.put(monitoringCluster + '_template/' + indexPrefix.replace('.', '') + filename[:-5],
                                                   data = template,
                                                   headers={'Content-Type': 'application/json;charset=UTF-8'},
