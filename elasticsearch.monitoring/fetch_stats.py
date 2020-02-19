@@ -149,7 +149,7 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
                 query_count_delta = query_total - query_total_old
                 node_data["node_stats"]["indices"]["search"]["query_count_delta"] = query_count_delta
                 if query_count_delta != 0:
-                    query_avg_time = (int)(query_time_current / query_count_delta)
+                    query_avg_time = query_time_current / query_count_delta
                 else:
                     query_avg_time = 0
                 node_data["node_stats"]["indices"]["search"]["query_avg_time"] = query_avg_time

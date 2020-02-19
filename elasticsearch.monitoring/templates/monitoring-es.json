@@ -309,7 +309,7 @@
 										"type": "long"
 									},
 									"query_avg_time": {
-										"type": "long"
+										"type": "float"
 									},
 									"query_time_current": {
 										"type": "long"
