@@ -22,6 +22,7 @@ By default they are both configured to be http://localhost:9200/ , make sure to 
 * ES_METRICS_CLUSTER_URL - A comma seperated list of the monitored nodes (client/LB or data nodes if no other option).
 * ES_METRICS_MONITORING_CLUSTER_URL - host for the monitoring cluster.
 * ES_METRICS_INDEX_NAME - The index into which the monitoring data will go, can be left as is. default is '.monitoring-es-7-'
+* NUMBER_OF_REPLICAS - number of replicas for indices created on the monitoring server. Default is 1
 
 You can also set polling interval (10 seconds by default) and a prefix for the index name. See the script for more details.
 
