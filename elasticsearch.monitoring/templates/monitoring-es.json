@@ -308,18 +308,11 @@
 									"query_total": {
 										"type": "long"
 									},
-									"query_avg_time": {
-										"type": "float"
-									},
-									"query_time_current": {
-										"type": "long"
-									},
+
 									"query_current": {
 										"type": "long"
-									},
-									"query_count_delta": {
-										"type": "long"
 									}
+
 								}
 							},
 							"segments": {
@@ -944,6 +937,15 @@
 										"type": "long"
 									},
 									"suggest_total" : {
+										"type": "long"
+									},
+									"query_avg_time": {
+										"type": "float"
+									},
+									"query_time_current": {
+										"type": "long"
+									},
+									"query_count_delta": {
 										"type": "long"
 									}
 								}
