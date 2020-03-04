@@ -307,12 +307,7 @@
 									},
 									"query_total": {
 										"type": "long"
-									},
-
-									"query_current": {
-										"type": "long"
 									}
-
 								}
 							},
 							"segments": {
