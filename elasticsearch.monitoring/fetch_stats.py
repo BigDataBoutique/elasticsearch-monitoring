@@ -153,7 +153,15 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
                 else:
                     query_avg_time = 0
                 node_data["node_stats"]["indices"]["search"]["query_avg_time"] = query_avg_time
-
+                #shaig 4.3 adding data for io_stats
+                old_write = r_json_prev['nodes'][node_id]["fs"]["io_stats"]["total"]["write_operations"]
+                new_write = node_data["node_stats"]["fs"]["io_stats"]["total"]["write_operations"]
+                write_ops_current = new_write - old_write
+                node_data["node_stats"]["fs"]["io_stats"]["total"]["write_ops_current"] = write_ops_current
+                old_read = r_json_prev['nodes'][node_id]["fs"]["io_stats"]["total"]["read_operations"]
+                new_read = node_data["node_stats"]["fs"]["io_stats"]["total"]["read_operations"]
+                read_ops_current = new_read - old_read
+                node_data["node_stats"]["fs"]["io_stats"]["total"]["read_ops_current"] = read_ops_current
             metric_docs.append(node_data)
     except (requests.exceptions.Timeout, socket.timeout):
         print("[%s] Timeout received on trying to get cluster health" % (time.strftime("%Y-%m-%d %H:%M:%S")))
