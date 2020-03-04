@@ -68,3 +68,6 @@ You can now import the dashboard found at `Elasticsearch Cluster Monitoring.json
 For more details see the official documentation here: http://docs.grafana.org/features/datasources/elasticsearch/.
 
 For guidance on importing the dashboard see the official Grafana documentation: http://docs.grafana.org/reference/export_import/#importing-a-dashboard.
+
+An outdated, but useful, information on collected metrics:
+https://www.elastic.co/guide/en/elasticsearch/guide/current/_monitoring_individual_nodes.html

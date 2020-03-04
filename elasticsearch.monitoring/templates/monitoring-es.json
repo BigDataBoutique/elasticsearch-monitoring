@@ -5,7 +5,7 @@
 	  "index": {
 		"codec": "best_compression",
 		"number_of_shards": "1",
-		"number_of_replicas": "1"
+		"number_of_replicas": "{{NUMBER_OF_REPLICAS}}"
 	  }
 	},
 	"mappings":{
@@ -932,6 +932,15 @@
 										"type": "long"
 									},
 									"suggest_total" : {
+										"type": "long"
+									},
+									"query_avg_time": {
+										"type": "float"
+									},
+									"query_time_current": {
+										"type": "long"
+									},
+									"query_count_delta": {
 										"type": "long"
 									}
 								}
