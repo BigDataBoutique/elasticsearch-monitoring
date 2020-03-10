@@ -98,7 +98,7 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
         utc_datetime = datetime.datetime.utcnow()
 
         for node_id, node in r_json['nodes'].items():
-            print(f"Building log for node {node['name']}")
+            print("Building log for node " + node['name'])
             node_data = {
                 "timestamp": str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'),
                 "cluster_name": cluster_name,
