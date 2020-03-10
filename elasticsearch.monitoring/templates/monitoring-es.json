@@ -1112,6 +1112,9 @@
 					"mlockall": {
 						"type": "boolean"
 					},
+					"missing_previous": {
+						"type": "boolean"
+					},
 					"node_id": {
 						"type": "keyword"
 					},

@@ -98,7 +98,7 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
         utc_datetime = datetime.datetime.utcnow()
 
         for node_id, node in r_json['nodes'].items():
-
+            print(f"Building log for node {node['name']}")
             node_data = {
                 "timestamp": str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'),
                 "cluster_name": cluster_name,
@@ -138,22 +138,7 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
 
             # shaig 4.2 - adding data for current and average query time
             if r_json_prev:
-                old_time = r_json_prev['nodes'][node_id]["indices"]["search"]["query_time_in_millis"]
-                new_time = node_data["node_stats"]["indices"]["search"]["query_time_in_millis"]
-                query_time_current = new_time - old_time
-                node_data["node_stats"]["indices"]["search"]["query_time_current"] = query_time_current
-                #notice that "query_current" does not deliver correct data since it counts the *currently*
-                #running queries rather than the additional queries ran
-                query_total = node_data["node_stats"]["indices"]["search"]["query_total"]
-                query_total_old = r_json_prev['nodes'][node_id]["indices"]["search"]["query_total"]
-                query_count_delta = query_total - query_total_old
-                node_data["node_stats"]["indices"]["search"]["query_count_delta"] = query_count_delta
-                if query_count_delta != 0:
-                    query_avg_time = query_time_current / query_count_delta
-                else:
-                    query_avg_time = 0
-                node_data["node_stats"]["indices"]["search"]["query_avg_time"] = query_avg_time
-
+                calc_delta_statistics(node_id, node_data, r_json_prev)
             metric_docs.append(node_data)
     except (requests.exceptions.Timeout, socket.timeout):
         print("[%s] Timeout received on trying to get cluster health" % (time.strftime("%Y-%m-%d %H:%M:%S")))
@@ -162,6 +147,25 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
     r_json_prev = r_json
     return metric_docs
 
+def calc_delta_statistics(node_id, new_data, prev_data):
+    if node_id in prev_data['nodes']: 
+        old_time = prev_data['nodes'][node_id]["indices"]["search"]["query_time_in_millis"]
+        new_time = new_data["node_stats"]["indices"]["search"]["query_time_in_millis"]
+        query_time_current = new_time - old_time
+        new_data["node_stats"]["indices"]["search"]["query_time_current"] = query_time_current
+        #notice that "query_current" does not deliver correct data since it counts the *currently*
+        #running queries rather than the additional queries ran
+        query_total = new_data["node_stats"]["indices"]["search"]["query_total"]
+        query_total_old = prev_data['nodes'][node_id]["indices"]["search"]["query_total"]
+        query_count_delta = query_total - query_total_old
+        new_data["node_stats"]["indices"]["search"]["query_count_delta"] = query_count_delta
+        if query_count_delta != 0:
+            query_avg_time = query_time_current / query_count_delta
+        else:
+            query_avg_time = 0
+        new_data["node_stats"]["indices"]["search"]["query_avg_time"] = query_avg_time
+    else:
+        new_data["node_stats"]["missing_previous"] = True
 
 def fetch_index_stats():
     # TODO
@@ -252,7 +256,7 @@ def with_type(o, _type):
 @click.option('--index-prefix', default='', help='Index prefix for Elastic monitor')
 @click.argument('monitor-host', default=monitoringCluster)
 @click.argument('monitor', default='elasticsearch')
-@click.argument('cluster-host', default='http://localhost:9200/')
+@click.argument('cluster-host', default='http://10.0.0.59:9200/')
 def main(interval, cluster_host, monitor, monitor_host, index_prefix):
     global cluster_uuid, indexPrefix
 
@@ -301,11 +305,11 @@ def main(interval, cluster_host, monitor, monitor_host, index_prefix):
 
                     elapsed = time.time() - now
                     click.echo("[%s] Total Elapsed Time: %s" % (time.strftime("%Y-%m-%d %H:%M:%S"), elapsed))
-                    timeDiff = nextRun - time.time()
-
-                    # Check timediff , if timediff >=0 sleep, if < 0 send metrics to es
-                    if timeDiff >= 0:
-                        time.sleep(timeDiff)
+                
+                timeDiff = nextRun - time.time()
+                # Check timediff , if timediff >=0 sleep, if < 0 send metrics to es
+                if timeDiff >= 0:
+                    time.sleep(timeDiff)
         except requests.exceptions.ConnectionError as e:
             click.echo("[%s] FATAL Connection error %s, quitting" % (time.strftime("%Y-%m-%d %H:%M:%S"), e))
             sys.exit(1)
