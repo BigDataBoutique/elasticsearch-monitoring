@@ -164,6 +164,15 @@ def calc_delta_statistics(node_id, new_data, prev_data):
         else:
             query_avg_time = 0
         new_data["node_stats"]["indices"]["search"]["query_avg_time"] = query_avg_time
+        # shaig 4.3 adding data for io_stats
+        old_write = prev_data['nodes'][node_id]["fs"]["io_stats"]["total"]["write_operations"]
+        new_write = new_data["node_stats"]["fs"]["io_stats"]["total"]["write_operations"]
+        write_ops_current = new_write - old_write
+        new_data["node_stats"]["fs"]["io_stats"]["total"]["write_ops_current"] = write_ops_current
+        old_read = prev_data['nodes'][node_id]["fs"]["io_stats"]["total"]["read_operations"]
+        new_read = new_data["node_stats"]["fs"]["io_stats"]["total"]["read_operations"]
+        read_ops_current = new_read - old_read
+        new_data["node_stats"]["fs"]["io_stats"]["total"]["read_ops_current"] = read_ops_current
     else:
         new_data["node_stats"]["missing_previous"] = True
 
@@ -298,7 +307,6 @@ def main(interval, cluster_host, monitor, monitor_host, index_prefix):
 
                     elapsed = time.time() - now
                     click.echo("[%s] Total Elapsed Time: %s" % (time.strftime("%Y-%m-%d %H:%M:%S"), elapsed))
-                
                 timeDiff = nextRun - time.time()
                 # Check timediff , if timediff >=0 sleep, if < 0 send metrics to es
                 if timeDiff >= 0:
