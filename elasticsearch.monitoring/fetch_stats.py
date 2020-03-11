@@ -276,14 +276,7 @@ def main(interval, cluster_host, monitor, monitor_host, index_prefix):
             response = requests.get(random.choice(cluster_hosts), timeout=(5, 5))
             assert_http_status(response)
             cluster_uuid = response.json().get('cluster_uuid')
-            init = True
-            if monitor == 'elasticsearch':
-                try:
-                    create_templates()
-                except (requests.exceptions.Timeout, socket.timeout, requests.exceptions.ConnectionError):
-                    click.echo("[%s] Timeout received when trying to put template" % (time.strftime("%Y-%m-%d %H:%M:%S")))
-            elif monitor == 'signalfx':
-                import signalfx
+            init = True #
         except (requests.exceptions.Timeout, socket.timeout, requests.exceptions.ConnectionError):
             click.echo("[%s] Timeout received on trying to get cluster uuid" % (time.strftime("%Y-%m-%d %H:%M:%S")))
             sys.exit(1)
