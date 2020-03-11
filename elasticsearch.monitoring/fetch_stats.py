@@ -148,7 +148,7 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
     return metric_docs
 
 def calc_delta_statistics(node_id, new_data, prev_data):
-    if node_id in prev_data['nodes']:
+    if node_id in prev_data['nodes']: 
         old_time = prev_data['nodes'][node_id]["indices"]["search"]["query_time_in_millis"]
         new_time = new_data["node_stats"]["indices"]["search"]["query_time_in_millis"]
         query_time_current = new_time - old_time
@@ -285,14 +285,7 @@ def main(interval, cluster_host, monitor, monitor_host, index_prefix):
             response = requests.get(random.choice(cluster_hosts), timeout=(5, 5))
             assert_http_status(response)
             cluster_uuid = response.json().get('cluster_uuid')
-            init = True
-            if monitor == 'elasticsearch':
-                try:
-                    create_templates()
-                except (requests.exceptions.Timeout, socket.timeout, requests.exceptions.ConnectionError):
-                    click.echo("[%s] Timeout received when trying to put template" % (time.strftime("%Y-%m-%d %H:%M:%S")))
-            elif monitor == 'signalfx':
-                import signalfx
+            init = True #
         except (requests.exceptions.Timeout, socket.timeout, requests.exceptions.ConnectionError):
             click.echo("[%s] Timeout received on trying to get cluster uuid" % (time.strftime("%Y-%m-%d %H:%M:%S")))
             sys.exit(1)
@@ -314,7 +307,6 @@ def main(interval, cluster_host, monitor, monitor_host, index_prefix):
 
                     elapsed = time.time() - now
                     click.echo("[%s] Total Elapsed Time: %s" % (time.strftime("%Y-%m-%d %H:%M:%S"), elapsed))
-
                 timeDiff = nextRun - time.time()
                 # Check timediff , if timediff >=0 sleep, if < 0 send metrics to es
                 if timeDiff >= 0:

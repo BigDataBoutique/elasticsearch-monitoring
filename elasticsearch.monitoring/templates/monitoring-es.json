@@ -1118,6 +1118,9 @@
 					"mlockall": {
 						"type": "boolean"
 					},
+					"missing_previous": {
+						"type": "boolean"
+					},
 					"node_id": {
 						"type": "keyword"
 					},
@@ -1448,5 +1451,8 @@
 				"type": "keyword"
 			}			
 		}
+  },
+  "alias": {
+	  ".monitoring-es-alias": {}
   }
 }
