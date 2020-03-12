@@ -137,7 +137,7 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
             del node_data["node_stats"]["fs"]["data"]
 
             # shaig 4.2 - adding data for current and average query time
-            if r_json_prev:
+            if r_json_prev and node_id in r_json_prev['nodes']:
                 old_time = r_json_prev['nodes'][node_id]["indices"]["search"]["query_time_in_millis"]
                 new_time = node_data["node_stats"]["indices"]["search"]["query_time_in_millis"]
                 query_time_current = new_time - old_time
