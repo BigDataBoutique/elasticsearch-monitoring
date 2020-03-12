@@ -1,6 +1,6 @@
 {
 	"order": 0,
-	"template": "{{INDEX_PREFIX}}",
+	"template": ".monitoring-es-",
 	"settings": {
 	  "index": {
 		"codec": "best_compression",
@@ -8,6 +8,9 @@
 		"number_of_replicas": "{{NUMBER_OF_REPLICAS}}"
 	  }
 	},
+  	"aliases": {
+	  ".monitoring-es-alias": {}
+  	},
 	"mappings":{
 		"dynamic": "false",
 		"date_detection": false,
@@ -818,6 +821,9 @@
 									"total_size_in_bytes" : {
 										"type": "long"
 									},
+									"avg_size_in_bytes": {
+										"type": "float"
+									},
 									"total_time_in_millis" : {
 										"type": "long"
 									},
@@ -1451,8 +1457,5 @@
 				"type": "keyword"
 			}			
 		}
-  },
-  "alias": {
-	  ".monitoring-es-alias": {}
   }
 }

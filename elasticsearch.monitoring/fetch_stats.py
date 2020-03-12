@@ -8,6 +8,7 @@ import sys
 import random
 import logging
 import numbers, types
+from NodeStatsDeltaMapper import NodeStatsDeltaMapper
 
 import click
 import requests
@@ -138,7 +139,11 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
 
             # shaig 4.2 - adding data for current and average query time
             if r_json_prev:
-                calc_delta_statistics(node_id, node_data, r_json_prev)
+                try: 
+                    prev_data = r_json_prev['nodes'][node_id]
+                    calc_delta_statistics(node_data, prev_data)
+                except KeyError:
+                    node_data["node_stats"]["missing_previous"] = True
             metric_docs.append(node_data)
     except (requests.exceptions.Timeout, socket.timeout):
         print("[%s] Timeout received on trying to get cluster health" % (time.strftime("%Y-%m-%d %H:%M:%S")))
@@ -147,34 +152,15 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
     r_json_prev = r_json
     return metric_docs
 
-def calc_delta_statistics(node_id, new_data, prev_data):
-    if node_id in prev_data['nodes']: 
-        old_time = prev_data['nodes'][node_id]["indices"]["search"]["query_time_in_millis"]
-        new_time = new_data["node_stats"]["indices"]["search"]["query_time_in_millis"]
-        query_time_current = new_time - old_time
-        new_data["node_stats"]["indices"]["search"]["query_time_current"] = query_time_current
-        #notice that "query_current" does not deliver correct data since it counts the *currently*
-        #running queries rather than the additional queries ran
-        query_total = new_data["node_stats"]["indices"]["search"]["query_total"]
-        query_total_old = prev_data['nodes'][node_id]["indices"]["search"]["query_total"]
-        query_count_delta = query_total - query_total_old
-        new_data["node_stats"]["indices"]["search"]["query_count_delta"] = query_count_delta
-        if query_count_delta != 0:
-            query_avg_time = query_time_current / query_count_delta
-        else:
-            query_avg_time = 0
-        new_data["node_stats"]["indices"]["search"]["query_avg_time"] = query_avg_time
-        # shaig 4.3 adding data for io_stats
-        old_write = prev_data['nodes'][node_id]["fs"]["io_stats"]["total"]["write_operations"]
-        new_write = new_data["node_stats"]["fs"]["io_stats"]["total"]["write_operations"]
-        write_ops_current = new_write - old_write
-        new_data["node_stats"]["fs"]["io_stats"]["total"]["write_ops_current"] = write_ops_current
-        old_read = prev_data['nodes'][node_id]["fs"]["io_stats"]["total"]["read_operations"]
-        new_read = new_data["node_stats"]["fs"]["io_stats"]["total"]["read_operations"]
-        read_ops_current = new_read - old_read
-        new_data["node_stats"]["fs"]["io_stats"]["total"]["read_ops_current"] = read_ops_current
-    else:
-        new_data["node_stats"]["missing_previous"] = True
+def calc_delta_statistics(node_data, prev_data):        
+    mapper = NodeStatsDeltaMapper(node_data["node_stats"], prev_data)
+    node_data["node_stats"]["indices"]["search"]["query_time_current"] = mapper.getQueryTime()
+    node_data["node_stats"]["indices"]["search"]["query_count_delta"] = mapper.getQueryTotal()
+    node_data["node_stats"]["indices"]["search"]["query_avg_time"] = mapper.getAvgQueryTime()
+    node_data["node_stats"]["indices"]["merges"]["avg_size_in_bytes"] = mapper.getMergeTotal()
+    node_data["node_stats"]["fs"]["io_stats"]["total"]["write_ops_current"] = mapper.getWriteOperations()
+    node_data["node_stats"]["fs"]["io_stats"]["total"]["read_ops_current"] = mapper.getReadOperations()
+    
 
 def fetch_index_stats():
     # TODO
