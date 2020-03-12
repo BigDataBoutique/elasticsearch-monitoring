@@ -665,6 +665,12 @@
 											},
 											"write_operations": {
 												"type": "long"
+											},
+											"read_ops_current": {
+												"type": "long"
+											},
+											"write_ops_current": {
+												"type": "long"
 											}
 										}
 									}
