@@ -173,7 +173,10 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
     global r_json_index_prev
     try:
         response_indices = requests.get(base_url + 'indices_to_query/_search', timeout=(5, 5))
+        if response_indices.status_code == 404:
+            return None
         indices_json = response_indices.json()
+
         indices_hits = indices_json['hits']['hits']
         indices_to_query = ""
         for idx,d in enumerate(indices_hits):
@@ -181,8 +184,11 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
                 indices_to_query += ','
             index_name = d['_source']['index_name']
             indices_to_query += index_name
-
+        if indices_to_query is "":
+            return None
         response = requests.get(base_url + indices_to_query + '/_stats', timeout=(5, 5))
+        if response.status_code == 404:
+            return None
         r_json = response.json()
         for index_name in r_json['indices']:
             print("Building log for index " + index_name)
@@ -273,8 +279,11 @@ def into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats):
 
     cluster_health_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'cluster_health'))+'\n' for o in cluster_health]
     node_stats_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'node_stats'))+'\n' for o in node_stats]
-    index_stats_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'index_stats')) +'\n' for o in index_stats]
-    data = node_stats_data + cluster_health_data + index_stats_data
+    data = node_stats_data + cluster_health_data
+    if index_stats is not None:
+        index_stats_data = ['{"index":{"_index":"' + index_name + '","_type":"_doc"}}\n' + json.dumps(
+            with_type(o, 'index_stats')) + '\n' for o in index_stats]
+        data += index_stats_data
 
     try:
         bulk_response = requests.post(monitor_host + index_name + '/_bulk',
