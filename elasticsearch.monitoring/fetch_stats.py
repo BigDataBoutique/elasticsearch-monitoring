@@ -8,13 +8,17 @@ import sys
 import random
 import logging
 import numbers, types
+
+from IndexStatsDeltaMapper import IndexStatsDeltaMapper
 from NodeStatsDeltaMapper import NodeStatsDeltaMapper
 
 import click
 import requests
 
 working_dir = os.path.dirname(os.path.realpath(__file__))
-r_json_prev = {}
+r_json_node_prev = {}
+r_json_index_prev = {}
+
 def merge(one, two):
     cp = one.copy()
     cp.update(two)
@@ -88,7 +92,7 @@ def fetch_cluster_health(base_url='http://localhost:9200/'):
 node_stats_to_collect = ["indices", "os", "process", "jvm", "thread_pool", "fs", "transport", "http", "breakers", "script"]
 def fetch_nodes_stats(base_url='http://localhost:9200/'):
     metric_docs = []
-    global r_json_prev
+    global r_json_node_prev
     try:
         response = requests.get(base_url + '_nodes/stats', timeout=(5, 5))
         r_json = response.json()
@@ -138,10 +142,10 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
             del node_data["node_stats"]["fs"]["data"]
 
             # shaig 4.2 - adding data for current and average query time
-            if r_json_prev:
+            if r_json_node_prev:
                 try: 
-                    prev_data = r_json_prev['nodes'][node_id]
-                    calc_delta_statistics(node_data, prev_data)
+                    prev_data = r_json_node_prev['nodes'][node_id]
+                    calc_node_delta_statistics(node_data, prev_data)
                 except KeyError:
                     node_data["node_stats"]["missing_previous"] = True
             metric_docs.append(node_data)
@@ -149,10 +153,10 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
         print("[%s] Timeout received on trying to get cluster health" % (time.strftime("%Y-%m-%d %H:%M:%S")))
 
     # shaig 4.2 - adding data for current and average query time
-    r_json_prev = r_json
+    r_json_node_prev = r_json
     return metric_docs
 
-def calc_delta_statistics(node_data, prev_data):        
+def calc_node_delta_statistics(node_data, prev_data):
     mapper = NodeStatsDeltaMapper(node_data["node_stats"], prev_data)
     node_data["node_stats"]["indices"]["search"]["query_time_current"] = mapper.getQueryTime()
     node_data["node_stats"]["indices"]["search"]["query_count_delta"] = mapper.getQueryTotal()
@@ -160,11 +164,54 @@ def calc_delta_statistics(node_data, prev_data):
     node_data["node_stats"]["indices"]["merges"]["avg_size_in_bytes"] = mapper.getMergeTotal()
     node_data["node_stats"]["fs"]["io_stats"]["total"]["write_ops_current"] = mapper.getWriteOperations()
     node_data["node_stats"]["fs"]["io_stats"]["total"]["read_ops_current"] = mapper.getReadOperations()
-    
+    node_data["node_stats"]["fs"]["total"]["free_ratio"] = mapper.getFreeRatio()
 
-def fetch_index_stats():
-    # TODO
-    pass
+
+# shaig 18.3 - adding data for index stats
+def fetch_index_stats(base_url='http://localhost:9200/'):
+    metric_docs = []
+    global r_json_index_prev
+    try:
+        response_indices = requests.get(base_url + 'indices_to_query/_search', timeout=(5, 5))
+        indices_json = response_indices.json()
+        indices_hits = indices_json['hits']['hits']
+        indices_to_query = ""
+        for idx,d in enumerate(indices_hits):
+            if idx != 0:
+                indices_to_query += ','
+            index_name = d['_source']['index_name']
+            indices_to_query += index_name
+
+        response = requests.get(base_url + indices_to_query + '/_stats', timeout=(5, 5))
+        r_json = response.json()
+        for index_name in r_json['indices']:
+            print("Building log for index " + index_name)
+            index_data = {}
+            index_data['index_stats'] = r_json['indices'][index_name]
+            index_data['index_stats']['index'] = index_name
+
+            if r_json_index_prev:
+                try:
+                    prev_data = r_json_index_prev['indices'][index_name]
+                    calc_index_delta_statistics(index_data, prev_data)
+                except KeyError:
+                    index_data['index_stats']["missing_previous"] = True
+            metric_docs.append(index_data)
+    except (requests.exceptions.Timeout, socket.timeout):
+        print("[%s] Timeout received on getting index stats" % (time.strftime("%Y-%m-%d %H:%M:%S")))
+
+    r_json_index_prev = r_json
+    return metric_docs
+
+
+def calc_index_delta_statistics(index_data, prev_data):
+    mapper = IndexStatsDeltaMapper(index_data['index_stats'], prev_data)
+    index_data['index_stats']["primaries"]["search"]["query_time_current"] = mapper.getQueryTime()
+    index_data['index_stats']["primaries"]["search"]["query_count_delta"] = mapper.getQueryTotal()
+    index_data['index_stats']["primaries"]["search"]["query_avg_time"] = mapper.getAvgQueryTime()
+    index_data['index_stats']["primaries"]["merges"]["avg_size_in_bytes"] = mapper.getMergeTotal()
+    index_data['index_stats']["primaries"]["docs"]["count_delta"] = mapper.getCountDelta()
+    index_data['index_stats']["primaries"]["docs"]["deleted_delta"] = mapper.getDeletedDelta()
 
 
 def create_templates():
@@ -182,9 +229,9 @@ def create_templates():
 
 
 def poll_metrics(cluster_host, monitor, monitor_host):
-    cluster_health, node_stats = get_all_data(cluster_host)
+    cluster_health, node_stats,index_stats = get_all_data(cluster_host)
     if monitor == 'elasticsearch':
-        into_elasticsearch(monitor_host, cluster_health, node_stats)
+        into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats)
     elif monitor == 'signalfx':
         into_signalfx(monitor_host, cluster_health, node_stats)
 
@@ -192,8 +239,9 @@ def poll_metrics(cluster_host, monitor, monitor_host):
 def get_all_data(cluster_host):
     cluster_health = fetch_cluster_health(cluster_host)
     node_stats = fetch_nodes_stats(cluster_host)
+    index_stats = fetch_index_stats(cluster_host)
     # TODO generate cluster_state documents
-    return cluster_health, node_stats
+    return cluster_health, node_stats,index_stats
 
 
 def into_signalfx(sfx_key, cluster_health, node_stats):
@@ -219,14 +267,14 @@ def into_signalfx(sfx_key, cluster_health, node_stats):
                                          }])
     ingest.stop()
 
-def into_elasticsearch(monitor_host, cluster_health, node_stats):
+def into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats):
     utc_datetime = datetime.datetime.utcnow()
     index_name = indexPrefix + str(utc_datetime.strftime('%Y.%m.%d'))
 
     cluster_health_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'cluster_health'))+'\n' for o in cluster_health]
     node_stats_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'node_stats'))+'\n' for o in node_stats]
-
-    data = node_stats_data + cluster_health_data
+    index_stats_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'index_stats')) +'\n' for o in index_stats]
+    data = node_stats_data + cluster_health_data + index_stats_data
 
     try:
         bulk_response = requests.post(monitor_host + index_name + '/_bulk',

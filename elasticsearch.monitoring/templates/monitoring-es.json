@@ -225,12 +225,24 @@
 					"index": {
 						"type": "keyword"
 					},
+					"missing_previous": {
+						"type": "boolean"
+					},
 					"primaries": {
 						"properties": {
 							"docs": {
 								"properties": {
 									"count": {
 										"type": "long"
+									},
+									"deleted" : {
+									  "type": "long"
+									},
+									"count_delta": {
+									  "type": "long"
+									},
+									"deleted_delta": {
+									  "type": "long"
 									}
 								}
 							},
@@ -261,6 +273,10 @@
 								"properties": {
 									"total_size_in_bytes": {
 										"type": "long"
+									},
+
+									"avg_size_in_bytes" : {
+									  "type" : "float"
 									}
 								}
 							},
@@ -309,6 +325,15 @@
 										"type": "long"
 									},
 									"query_total": {
+										"type": "long"
+									},
+									"query_avg_time": {
+										"type": "float"
+									},
+									"query_time_current": {
+										"type": "long"
+									},
+									"query_count_delta": {
 										"type": "long"
 									}
 								}
@@ -693,8 +718,10 @@
 									},
 									"total_in_bytes": {
 										"type": "long"
-									}
-
+									},
+                    				"free_ratio" :{
+                      					"type" : "float"
+                    				}
 								}
 							}
 						}
