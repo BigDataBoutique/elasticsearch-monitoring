@@ -981,6 +981,15 @@
 									},
 									"query_count_delta": {
 										"type": "long"
+									},
+									"fetch_time_current": {
+										"type": "long"
+									},
+									"fetch_count_delta": {
+										"type": "long"
+									},
+									"query_then_fetch_avg_time": {
+										"type": "float"
 									}
 								}
 							},

@@ -159,13 +159,20 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
 
 def calc_node_delta_statistics(node_data, prev_data):
     mapper = NodeStatsDeltaMapper(node_data["node_stats"], prev_data)
+    #Search statistics
     node_data["node_stats"]["indices"]["search"]["query_time_current"] = mapper.getQueryTime()
     node_data["node_stats"]["indices"]["search"]["query_count_delta"] = mapper.getQueryTotal()
     node_data["node_stats"]["indices"]["search"]["query_avg_time"] = mapper.getAvgQueryTime()
+    node_data["node_stats"]["indices"]["search"]["fetch_time_current"] = mapper.getFetchTime()
+    node_data["node_stats"]["indices"]["search"]["fetch_count_delta"] = mapper.getFetchTotal()
+    node_data["node_stats"]["indices"]["search"]["query_then_fetch_avg_time"] = mapper.getAvgQueryThenFetchTime()
+
+    # machine statistics
     node_data["node_stats"]["indices"]["merges"]["avg_size_in_bytes"] = mapper.getMergeTotal()
     node_data["node_stats"]["fs"]["io_stats"]["total"]["write_ops_current"] = mapper.getWriteOperations()
     node_data["node_stats"]["fs"]["io_stats"]["total"]["read_ops_current"] = mapper.getReadOperations()
-    node_data["node_stats"]["fs"]["total"]["free_ratio"] = mapper.getFreeRatio()
+    node_data["node_stats"]["fs"]["total"]["free_ratio"] =\
+        node_data["node_stats"]["fs"]["total"]["free_in_bytes"] / node_data["node_stats"]["fs"]["total"]["total_in_bytes"]
 
 
 # shaig 18.3 - adding data for index stats

@@ -11,16 +11,23 @@ class NodeStatsDeltaMapper:
         queryTotal = self.getQueryTotal()
         return (queryTime/queryTotal) if queryTotal > 0 else 0
 
-    def getFreeRatio(self):
-        totalSpace = self.getTotalSpace()
-        freeSpace = self.getFreeSpace()
-        return (freeSpace/totalSpace) if totalSpace > 0 else 0
+    def getAvgQueryThenFetchTime(self):
+        fetchTime = self.getFetchTime()
+        fetchTotal = self.getFetchTotal()
+        fetchAvg = (fetchTime/fetchTotal) if fetchTotal > 0 else 0
+        return fetchAvg + self.getAvgQueryTime()
 
     def getQueryTime(self):
         return self.getDeltaVal("indices.search.query_time_in_millis")
 
     def getQueryTotal(self):
         return self.getDeltaVal("indices.search.query_total")
+
+    def getFetchTime(self):
+        return self.getDeltaVal("indices.search.fetch_time_in_millis")
+
+    def getFetchTotal(self):
+        return self.getDeltaVal("indices.search.fetch_total")
 
     def getMergeTotal(self):
         return self.getDeltaVal("indices.merges.total_size_in_bytes")
@@ -30,12 +37,6 @@ class NodeStatsDeltaMapper:
     
     def getReadOperations(self):
         return self.getDeltaVal("fs.io_stats.total.read_operations")
-
-    def getTotalSpace(self):
-        return self.getDeltaVal("fs.total.total_in_bytes")
-
-    def getFreeSpace(self):
-        return self.getDeltaVal("fs.total.free_in_bytes")
 
     def getDeltaVal(self, key):
         prevVal = dict_get(self.prev_stats, key)
