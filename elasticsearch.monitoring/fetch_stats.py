@@ -69,6 +69,7 @@ def assert_http_status(response, expected_status_code=200):
         raise Exception('Expected HTTP status code %d but got %d' % (expected_status_code, response.status_code))
 
 cluster_uuid = None
+cluster_name = None
 
 # Elasticsearch Cluster to Send metrics to
 monitoringCluster = os.environ.get('ES_METRICS_MONITORING_CLUSTER_URL', 'http://localhost:9200/')
@@ -172,8 +173,12 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
     metric_docs = []
     global r_json_index_prev
     try:
+        # getting timestamp
+        utc_datetime = datetime.datetime.utcnow()
+
+        # checking which indices are required
         response_indices = requests.get(base_url + 'indices_to_query/_search', timeout=(5, 5))
-        if response_indices.status_code == 404:
+        if response_indices.status_code != 200:
             return None
         indices_json = response_indices.json()
 
@@ -186,13 +191,21 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
             indices_to_query += index_name
         if indices_to_query is "":
             return None
+
+        # getting index stats for all relevant indices
         response = requests.get(base_url + indices_to_query + '/_stats', timeout=(5, 5))
-        if response.status_code == 404:
+        if response.status_code != 200:
             return None
         r_json = response.json()
+
+        # creating index stats json
         for index_name in r_json['indices']:
             print("Building log for index " + index_name)
-            index_data = {}
+            index_data = {
+                "timestamp": str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'),
+                "cluster_name": cluster_name,
+                "cluster_uuid": cluster_uuid
+                }
             index_data['index_stats'] = r_json['indices'][index_name]
             index_data['index_stats']['index'] = index_name
 
@@ -310,7 +323,7 @@ def with_type(o, _type):
 @click.argument('monitor', default='elasticsearch')
 @click.argument('cluster-host', default='http://10.0.0.59:9200/')
 def main(interval, cluster_host, monitor, monitor_host, index_prefix):
-    global cluster_uuid, indexPrefix
+    global cluster_uuid, cluster_name, indexPrefix
 
     monitored_cluster = os.environ.get('ES_METRICS_CLUSTER_URL', cluster_host)
     if ',' in monitored_cluster:
@@ -328,6 +341,7 @@ def main(interval, cluster_host, monitor, monitor_host, index_prefix):
             response = requests.get(random.choice(cluster_hosts), timeout=(5, 5))
             assert_http_status(response)
             cluster_uuid = response.json().get('cluster_uuid')
+            cluster_name = response.json().get('cluster_name')
             init = True #
         except (requests.exceptions.Timeout, socket.timeout, requests.exceptions.ConnectionError):
             click.echo("[%s] Timeout received on trying to get cluster uuid" % (time.strftime("%Y-%m-%d %H:%M:%S")))
