@@ -31,6 +31,12 @@ def merge(one, two):
     cp.update(two)
     return cp
 
+def convert_cluster_name(name):
+    cluster_name = name
+    if cluster_name in clusters_dictionary:
+        cluster_name = clusters_dictionary[cluster_name]
+    return cluster_name
+
 def color_to_level(color):
     return {
         'green': 0,
@@ -92,6 +98,7 @@ def fetch_cluster_health(base_url='http://localhost:9200/'):
         jsonData = response.json()
         jsonData['timestamp'] = str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
         jsonData['status_code'] = color_to_level(jsonData['status'])
+        jsonData['cluster_name'] = convert_cluster_name(jsonData['cluster_name'])
         return [jsonData]
     except (requests.exceptions.Timeout, socket.timeout):
         print("[%s] Timeout received on trying to get cluster health" % (time.strftime("%Y-%m-%d %H:%M:%S")))
@@ -104,10 +111,7 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
     try:
         response = requests.get(base_url + '_nodes/stats', timeout=(5, 5))
         r_json = response.json()
-        cluster_name = r_json['cluster_name']
-        if cluster_name in clusters_dictionary:
-            cluster_name = clusters_dictionary[r_json['cluster_name']]
-
+        cluster_name = convert_cluster_name(r_json['cluster_name'])
 
         # we are opting to not use the timestamp as reported by the actual node
         # to be able to better sync the various metrics collected
@@ -215,7 +219,6 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
         if response.status_code != 200:
             return None
         r_json = response.json()
-
         # creating index stats json
         for index_name in r_json['indices']:
             print("Building log for index " + index_name)
@@ -223,7 +226,8 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
                 "timestamp": str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'),
                 "cluster_name": cluster_name,
                 "cluster_uuid": cluster_uuid
-                }
+            }
+            index_data['cluster_name'] = convert_cluster_name(index_data['cluster_name'])
             index_data['index_stats'] = r_json['indices'][index_name]
             index_data['index_stats']['index'] = index_name
 
