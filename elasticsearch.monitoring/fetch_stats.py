@@ -18,6 +18,13 @@ import requests
 working_dir = os.path.dirname(os.path.realpath(__file__))
 r_json_node_prev = {}
 r_json_index_prev = {}
+clusters_dictionary = {
+    "b1780b614f5d4e0b8e3ad7e823889a8e": "Y2-EC-Prod",
+    "00df2ff0bd8944e6868ba73f991f9a1d": "Y2-EC-Dev",
+    "f557cc5f740b448785b82e7539490bed": "Y2-EC-Monitor",
+    "55c9d320289c47eb80f485c0f53bbc5f": "Y2-EC-Logs",
+    "4fb043c1b0ef4c3ba5fb94e8e74e5657": "Y2-EC-Yzer"
+}
 
 def merge(one, two):
     cp = one.copy()
@@ -98,6 +105,9 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
         response = requests.get(base_url + '_nodes/stats', timeout=(5, 5))
         r_json = response.json()
         cluster_name = r_json['cluster_name']
+        if cluster_name in clusters_dictionary:
+            cluster_name = clusters_dictionary[r_json['cluster_name']]
+
 
         # we are opting to not use the timestamp as reported by the actual node
         # to be able to better sync the various metrics collected
@@ -185,6 +195,7 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
 
         # checking which indices are required
         response_indices = requests.get(base_url + 'indices_to_query/_search', timeout=(5, 5))
+        print("Got indices_to_query" + base_url)
         if response_indices.status_code != 200:
             return None
         indices_json = response_indices.json()
