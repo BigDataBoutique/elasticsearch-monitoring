@@ -25,7 +25,8 @@ clusters_dictionary = {
     "55c9d320289c47eb80f485c0f53bbc5f": "Y2-EC-Logs",
     "4fb043c1b0ef4c3ba5fb94e8e74e5657": "Y2-EC-Yzer",
     "8d19975ab0a94e4ea06bc4d251a099ef": "Y2-EC-Prod-V2",
-    "c47b4d5910bb415b80e843e257fa57f3": "Y2-EC-Prod-V3"
+    "c47b4d5910bb415b80e843e257fa57f3": "Y2-EC-Prod-V3",
+    "936a0352e71547c69d7118fe9499c1d0": "Y2-EC-Prod-V4",
 }
 
 def merge(one, two):
