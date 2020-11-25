@@ -232,14 +232,14 @@ def into_elasticsearch(monitor_host, cluster_health, node_stats):
     utc_datetime = datetime.datetime.utcnow()
     index_name = indexPrefix + str(utc_datetime.strftime('%Y.%m.%d'))
 
-    cluster_health_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'cluster_health'))+'\n' for o in cluster_health]
-    node_stats_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'node_stats'))+'\n' for o in node_stats]
+    cluster_health_data = ['{"index":{"_index":"'+index_name+'","_type":"doc"}}\n' + json.dumps(with_type(o, 'cluster_health'))+'\n' for o in cluster_health]
+    node_stats_data = ['{"index":{"_index":"'+index_name+'","_type":"doc"}}\n' + json.dumps(with_type(o, 'node_stats'))+'\n' for o in node_stats]
 
     data = node_stats_data + cluster_health_data
 
     try:
-        bulk_response = requests.post(monitor_host + index_name + '/_bulk',
-                                      data='\n'.join(data),
+        bulk_response = requests.post(monitor_host + '_bulk',
+                                      data='\n'.join(data) + "\n",
                                       headers={'Content-Type': 'application/x-ndjson'},
                                       timeout=(30, 30))
         assert_http_status(bulk_response)
