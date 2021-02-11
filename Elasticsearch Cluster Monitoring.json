@@ -2452,7 +2452,7 @@
           ],
           "metrics": [
             {
-              "field": "node_stats.thread_pool.bulk.queue",
+              "field": "node_stats.thread_pool.write.queue",
               "id": "5",
               "meta": {},
               "settings": {},
@@ -2491,7 +2491,7 @@
           ],
           "metrics": [
             {
-              "field": "node_stats.thread_pool.bulk.rejected",
+              "field": "node_stats.thread_pool.write.rejected",
               "hide": true,
               "id": "1",
               "meta": {},
@@ -2516,7 +2516,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Thread pool: Bulk",
+      "title": "Thread pool: Write",
       "tooltip": {
         "shared": true,
         "sort": 0,
