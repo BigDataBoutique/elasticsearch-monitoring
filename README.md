@@ -1,16 +1,29 @@
-# Elasticsearch monitoring with Grafana
+# Elasticsearch monitoring with Pulse
 
 This repository contains everything required for end-to-end thorough monitoring of an Elasticsearch cluster.
 
-Elasticsearch Monitoring was crafted and is continually being updated and improved based on experience with debugging and stabilizing many Elasticsearch clusters world-wide.
+In general, you should use metricbeat with Pulse in order to get the optimal monitoring experience for your Elasticsearch cluster.
 
-<img width="1237" alt="Elasticsearch monitoring with Grafana" src="https://user-images.githubusercontent.com/212252/27615380-63111928-5bb0-11e7-8857-48f041950f3f.png">
+Pulse was crafted and is continually being updated and improved based on experience with debugging and stabilizing many Elasticsearch clusters world-wide.
+
+For more information on Pulse:
+
+https://bigdataboutique.com/contact
+
+As metricbeat is not an option for AWS Elasticsearch clusters, you can use this script to fetch data from them.
+
+This repository still allows relaying monitoring data to any Elasticsearch target, and contains a Grafana dashboard that works with the data created by it.
+
+However further improvements as well as advanced capabilities such as alerts are available only for Pulse.
+
+
+<img width="1237" alt="Elasticsearch monitoring with Grafana" src="https://gitlab.com/BigDataBoutique/elasticsearch-monitoring/uploads/1ce902cde681991af6d0bd51c2c606f1/pulse.jpg">
 
 ## Gathering metrics
 
-### Using X-Pack Monitoring
+### Using Metricbeat
 
-Elastic's X-Pack Monitoring is provided with an agent that is shipping metrics to the cluster used for monitoring. This is a push-based approach, and requires installing the X-Pack plugin to your cluster. To go that route, please follow the installation instructions here: https://www.elastic.co/guide/en/x-pack/current/installing-xpack.html
+Elastic's Metricbeat is provided with an agent that can ship metrics to the cluster used for monitoring. This is a push-based approach, and requires installing and configuring metricbeat. To go that route, please follow the installation instructions here: https://www.elastic.co/guide/en/elasticsearch/reference/current/configuring-metricbeat.html
 
 ### Using provided script
 
@@ -23,6 +36,8 @@ By default they are both configured to be http://localhost:9200/ , make sure to 
 * ES_METRICS_MONITORING_CLUSTER_URL - host for the monitoring cluster.
 * ES_METRICS_INDEX_NAME - The index into which the monitoring data will go, can be left as is. default is '.monitoring-es-7-'
 * NUMBER_OF_REPLICAS - number of replicas for indices created on the monitoring server. Default is 1
+* ES_METRICS_MONITORING_AUTH_TOKEN - X-Auth-Token header value if required for the target cluster
+* ES_METRICS_CLOUD_PROVIDER - either 'Amazon Elasticsearch' or 'Elastic Cloud' or not provided
 
 You can also set polling interval (10 seconds by default) and a prefix for the index name. See the script for more details.
 
@@ -30,7 +45,7 @@ Don't forget to install all dependencies by running:
 
 `pip install -r requirements.txt`
 
-The benefit of this approach is that it doesn't require installing a plugin, and is shipping the same bits (and even more) than the X-Pack Monitoring agent.
+The benefit of this approach is that it doesn't require installing a plugin, and is shipping the necessary information, with some important extras, as opposed to the Metricbeat approach.
 
 Once installed and configured, have the Python script run as a service to continuously collect metrics (with systemd for instance: https://linuxconfig.org/how-to-create-systemd-service-unit-in-linux).
 At launch, you can see a printed message verifying the script is drawing data from and into the correct hosts.
@@ -51,6 +66,13 @@ To further validate that, you can also check the values of field source_node.hos
 where ES_METRICS_CLUSTER_URL is setup to the monitored ES, and obviously adding additional variables if required.
 Run once in the foreground to validate that the script works correctly, then use -d in the docker run to run in background.
 
+### AWS pulse setup
+
+Same as above - you'll get specific values for ES_METRICS_MONITORING_CLUSTER_URL and ES_METRICS_MONITORING_AUTH_TOKEN,
+
+In addition you should set ES_METRICS_CLOUD_PROVIDER to 'Amazon Elasticsearch'.
+
+when running, make sure to set --health-flag=False . 
 
 ## Visualizing with Grafana
 
