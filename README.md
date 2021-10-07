@@ -74,7 +74,7 @@ In addition you should set ES_METRICS_CLOUD_PROVIDER to 'Amazon Elasticsearch'.
 
 when running, make sure to set --health-flag=False . 
 
-You can opt not to verify the server's TLS certificate with --verify-flag=False .
+You can opt not to verify your cluster's TLS certificate with --verify-flag=False .
 
 ## Visualizing with Grafana
 
