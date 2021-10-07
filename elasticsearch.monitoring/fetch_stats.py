@@ -80,6 +80,9 @@ def fetch_cluster_stats(base_url='http://localhost:9200/',health = True,verify=T
     metric_docs = []
     try:
         response = requests.get(base_url + '_cluster/health', timeout=(5, 5),verify=verify)
+        if response.status_code != 200:
+            logger.error("bad response while getting cluster health. response is:\n" + response.json())
+            return metric_docs,None
         cluster_health = response.json()
         utc_datetime = datetime.datetime.utcnow()
         ts = str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
@@ -88,13 +91,21 @@ def fetch_cluster_stats(base_url='http://localhost:9200/',health = True,verify=T
         if health:
             metric_docs.append(cluster_health)
         response = requests.get(base_url + '_cluster/stats', timeout=(5, 5),verify=verify)
+        if response.status_code != 200:
+            logger.error("bad response while getting cluster stats. response is:\n" + response.json())
+            return metric_docs,None
         cluster_stats = response.json()
         # creating cluster stats json
         cluster_stats_and_state = {'type':'cluster_stats','cluster_stats': cluster_stats, 'cluster_name': cluster_stats['cluster_name'], 'timestamp': ts, '@timestamp': cluster_stats['timestamp'],'cluster_uuid':cluster_stats['cluster_uuid'],'cloud_provider':cloud_provider}
         response = requests.get(base_url + '_cluster/state', timeout=(5, 5),verify=verify)
+        if response.status_code != 200:
+            logger.error("bad response while getting cluster state. response is:\n" + response.json())
+            return metric_docs,None
         cluster_state = response.json()
         cluster_state_json = {'nodes': cluster_state['nodes'],'cluster_uuid':cluster_state['cluster_uuid'],'state_uuid':cluster_state['state_uuid'],'master_node':cluster_state['master_node'],'version':cluster_state['version'],'status':cluster_health['status']}
         routing_table = cluster_state['routing_table']['indices']
+        if type(routing_table) is not dict:
+            logger.error("bad routing table from cluster state. response is:\n"+ response.json())
         cluster_stats_and_state['cluster_state'] = cluster_state_json
         metric_docs.append(cluster_stats_and_state)
         return metric_docs,routing_table
@@ -110,6 +121,9 @@ def fetch_nodes_stats(base_url='http://localhost:9200/',verify=True):
     r_json = None
     try:
         response = requests.get(base_url + '_nodes/stats', timeout=(5, 5),verify=verify)
+        if response.status_code != 200:
+            logger.error("bad response while getting node stats. response is:\n" + response.json())
+            return metric_docs
         r_json = response.json()
         cluster_name = r_json['cluster_name']
 
@@ -117,7 +131,11 @@ def fetch_nodes_stats(base_url='http://localhost:9200/',verify=True):
         # to be able to better sync the various metrics collected
         utc_datetime = datetime.datetime.utcnow()
         ts = str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
-        for node_id, node in r_json['nodes'].items():
+        nodes_dict = r_json['nodes']
+        if type(nodes_dict) is not dict:
+            logger.error("bad node stats. response is:\n" + response.json())
+            return metric_docs
+        for node_id, node in nodes_dict.items():
             doc_timestamp = datetime.datetime.fromtimestamp(node['timestamp']/1000.0)
             doc_ts = str(doc_timestamp.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
             node_data = {
@@ -253,15 +271,21 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
         ts = str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
         # getting index stats for all indices
         response = requests.get(base_url + '_stats', timeout=(5, 5),verify=verify)
-
         if response.status_code != 200:
-            return None
+            logger.error("bad response while getting index stats. response is:\n"+response.json())
+            return metric_docs
         index_stats = response.json()
         # creating index stats json
         indices = index_stats['indices']
         #AWS doesn't accept /_settings
         response = requests.get(base_url + '*/_settings', timeout=(5, 5), verify=verify)
+        if response.status_code != 200:
+            logger.error("bad response while getting index settings. response is:\n" + response.json())
+            return metric_docs
         index_settings = response.json()
+        if type(index_settings) is not dict:
+            logger.error("bad index settings. response is:\n" + response.json())
+            return metric_docs
         index_settings_ordered = dict(sorted(index_settings.items()))
         routing_table_ordered = dict(sorted(routing_table.items()))
 
@@ -288,7 +312,7 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
             #     except KeyError:
             #         index_data['index_stats']["missing_previous"] = True
             metric_docs.append(index_data)
-        # creating indices stats json
+            # creating indices stats json
         summary = index_stats["_all"]
         summary_data = {
                 "timestamp": ts,
@@ -328,7 +352,10 @@ def poll_metrics(cluster_host, monitor, monitor_host,health,verify,auth_token,cl
 def get_all_data(cluster_host,health,verify,cloud_provider):
     cluster_stats,routing_table = fetch_cluster_stats(cluster_host,health,verify,cloud_provider)
     node_stats = fetch_nodes_stats(cluster_host,verify)
-    index_stats = fetch_index_stats(routing_table,cluster_host,verify)
+    if type(routing_table) is not dict:
+        index_stats = []
+    else:
+        index_stats = fetch_index_stats(routing_table,cluster_host,verify)
     return cluster_stats, node_stats,index_stats
 
 
@@ -365,24 +392,24 @@ def into_elasticsearch(monitor_host, cluster_stats, node_stats,index_stats,auth_
         index_stats_data = ['{"index":{"_index":"' + index_name + '","_type":"_doc"}}\n' + json.dumps(
             o)  for o in index_stats]
         data += index_stats_data
-
-    try:
-        headers = {'Content-Type': 'application/x-ndjson'}
-        if auth_token is not None:
-            headers['X-Auth-Token'] = auth_token
-        bulk_response = requests.post(monitor_host + '_bulk',
-                                      data='\n'.join(data),
-                                      headers=headers,
-                                      timeout=(30, 30))
-        assert_http_status(bulk_response)
-        for item in bulk_response.json()["items"]:
-            if item.get("index") and item.get("index").get("status") != 201:
-                click.echo(json.dumps(item.get("index").get("error")))
-                click.echo(cluster_stats_data)
-            else:
-                click.echo(json.dumps(item.get("index").get("status")))
-    except (requests.exceptions.Timeout, socket.timeout):
-        logger.error("[%s] Timeout received while pushing collected metrics to Elasticsearch" % (time.strftime("%Y-%m-%d %H:%M:%S")))
+    if len(data) > 0:
+        try:
+            headers = {'Content-Type': 'application/x-ndjson'}
+            if auth_token is not None:
+                headers['X-Auth-Token'] = auth_token
+            bulk_response = requests.post(monitor_host + '_bulk',
+                                          data='\n'.join(data),
+                                          headers=headers,
+                                          timeout=(30, 30))
+            assert_http_status(bulk_response)
+            for item in bulk_response.json()["items"]:
+                if item.get("index") and item.get("index").get("status") != 201:
+                    click.echo(json.dumps(item.get("index").get("error")))
+                    click.echo(cluster_stats_data)
+                else:
+                    click.echo(json.dumps(item.get("index").get("status")))
+        except (requests.exceptions.Timeout, socket.timeout):
+            logger.error("[%s] Timeout received while pushing collected metrics to Elasticsearch" % (time.strftime("%Y-%m-%d %H:%M:%S")))
 
 
 def with_type(o, _type):

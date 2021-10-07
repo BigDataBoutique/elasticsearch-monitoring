@@ -74,6 +74,8 @@ In addition you should set ES_METRICS_CLOUD_PROVIDER to 'Amazon Elasticsearch'.
 
 when running, make sure to set --health-flag=False . 
 
+You can opt not to verify your cluster's TLS certificate with --verify-flag=False .
+
 ## Visualizing with Grafana
 
 You will need to create an Elasticsearch data source that is pointing to the cluster you use for monitoring.
