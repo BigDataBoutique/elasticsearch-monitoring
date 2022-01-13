@@ -15,8 +15,6 @@ import urllib3
 logger = logging.getLogger(__name__)
 
 working_dir = os.path.dirname(os.path.realpath(__file__))
-r_json_node_prev = {}
-# r_json_index_prev = {}
 def merge(one, two):
     cp = one.copy()
     cp.update(two)
@@ -117,7 +115,6 @@ node_stats_to_collect = ["indices", "os", "process", "jvm", "thread_pool", "fs",
 
 def fetch_nodes_stats(base_url='http://localhost:9200/',verify=True):
     metric_docs = []
-    global r_json_node_prev
     r_json = None
     try:
         response = requests.get(base_url + '_nodes/stats', timeout=(5, 5),verify=verify)
@@ -176,40 +173,9 @@ def fetch_nodes_stats(base_url='http://localhost:9200/',verify=True):
             # TODO remove some thread pools stats
             del node_data["node_stats"]["fs"]["timestamp"]
             del node_data["node_stats"]["fs"]["data"]
-
-            # shaig 4.2 - adding data for current and average query time
-            if r_json_node_prev and node_id in r_json_node_prev['nodes']:
-                old_time = r_json_node_prev['nodes'][node_id]["indices"]["search"]["query_time_in_millis"]
-                new_time = node_data["node_stats"]["indices"]["search"]["query_time_in_millis"]
-                query_time_current = new_time - old_time
-                node_data["node_stats"]["indices"]["search"]["query_time_current"] = query_time_current
-                #notice that "query_current" does not deliver correct data since it counts the *currently*
-                #running queries rather than the additional queries ran
-                query_total = node_data["node_stats"]["indices"]["search"]["query_total"]
-                query_total_old = r_json_node_prev['nodes'][node_id]["indices"]["search"]["query_total"]
-                query_count_delta = query_total - query_total_old
-                node_data["node_stats"]["indices"]["search"]["query_count_delta"] = query_count_delta
-                if query_count_delta != 0:
-                    query_avg_time = query_time_current / query_count_delta
-                else:
-                    query_avg_time = 0
-                node_data["node_stats"]["indices"]["search"]["query_avg_time"] = query_avg_time
-                #shaig 4.3 adding data for io_stats
-                old_write = r_json_node_prev['nodes'][node_id]["fs"]["io_stats"]["total"]["write_operations"]
-                new_write = node_data["node_stats"]["fs"]["io_stats"]["total"]["write_operations"]
-                write_ops_current = new_write - old_write
-                node_data["node_stats"]["fs"]["io_stats"]["total"]["write_ops_current"] = write_ops_current
-                old_read = r_json_node_prev['nodes'][node_id]["fs"]["io_stats"]["total"]["read_operations"]
-                new_read = node_data["node_stats"]["fs"]["io_stats"]["total"]["read_operations"]
-                read_ops_current = new_read - old_read
-                node_data["node_stats"]["fs"]["io_stats"]["total"]["read_ops_current"] = read_ops_current
             metric_docs.append(node_data)
     except (requests.exceptions.Timeout, socket.timeout) as e:
         logger.error("[%s] Timeout received on trying to get nodes stats" % (time.strftime("%Y-%m-%d %H:%M:%S")))
-
-    # shaig 4.2 - adding data for current and average query time
-    if r_json is not None:
-        r_json_node_prev = r_json
     return metric_docs
 
 
@@ -264,7 +230,6 @@ def get_shard_data(routing_table):
 # shaig 18.3 - adding data for index stats
 def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=True):
     metric_docs = []
-#    global r_json_index_prev
     try:
         # getting timestamp
         utc_datetime = datetime.datetime.utcnow()
@@ -302,15 +267,6 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
             index_data['index_stats']['index'] = index_name
 
             index_data['index_stats']['shards'] = shards
-
-
-            #TODO - implement index prev
-            # if r_json_index_prev:
-            #     try:
-            #         prev_data = r_json_index_prev['indices'][index_name]
-            #         calc_index_delta_statistics(index_data, prev_data)
-            #     except KeyError:
-            #         index_data['index_stats']["missing_previous"] = True
             metric_docs.append(index_data)
             # creating indices stats json
         summary = index_stats["_all"]
@@ -324,9 +280,8 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
         metric_docs.append(summary_data)
     except (requests.exceptions.Timeout, socket.timeout) as e:
         logger.error("[%s] Timeout received on getting index stats" % (time.strftime("%Y-%m-%d %H:%M:%S")))
-
-    #r_json_index_prev = r_json
     return metric_docs
+
 def create_templates():
     for filename in os.listdir(os.path.join(working_dir, 'templates')):
         if filename.endswith(".json"):
