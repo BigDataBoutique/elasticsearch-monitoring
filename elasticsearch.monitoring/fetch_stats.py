@@ -257,8 +257,10 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
         for index_name in indices:
             shards = get_shard_data(routing_table_ordered[index_name]['shards'])
             #logger.info("Building log for index " + index_name)
+            # unlike other stats types, @timestamp is based on current time because there is no document timestamp
             index_data = {
                 "timestamp": ts ,
+                "@timestamp": ts ,
                 "cluster_uuid": cluster_uuid,
                 "type": "index_stats",
                 "created" : index_settings_ordered[index_name]['settings']['index']['creation_date']
