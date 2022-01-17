@@ -259,6 +259,7 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
             #logger.info("Building log for index " + index_name)
             index_data = {
                 "timestamp": ts ,
+                "@timestamp": ts ,
                 "cluster_uuid": cluster_uuid,
                 "type": "index_stats",
                 "created" : index_settings_ordered[index_name]['settings']['index']['creation_date']
