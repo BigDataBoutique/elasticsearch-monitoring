@@ -38,6 +38,7 @@ By default they are both configured to be http://localhost:9200/ , make sure to 
 * NUMBER_OF_REPLICAS - number of replicas for indices created on the monitoring server. Default is 1
 * ES_METRICS_MONITORING_AUTH_TOKEN - X-Auth-Token header value if required for the target cluster
 * ES_METRICS_CLOUD_PROVIDER - either 'Amazon Elasticsearch' or 'Elastic Cloud' or not provided
+* ES_USERNAME and ES_PASSWORD - if applicable, for authenticating against the source cluster
 
 You can also set polling interval (10 seconds by default) and a prefix for the index name. See the script for more details.
 

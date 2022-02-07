@@ -1,16 +1,17 @@
 #!/usr/bin/env python
-import json
-import os
 import datetime
-import socket
-import time
-import sys
-import random
+import json
 import logging
-import numbers, types
+import os
+import random
+import socket
+import sys
+import time
+
 import click
 import requests
 import urllib3
+from requests.auth import HTTPBasicAuth
 
 logger = logging.getLogger(__name__)
 
@@ -61,12 +62,13 @@ def flatten_json(y):
 
 def assert_http_status(response, expected_status_code=200):
     if response.status_code != expected_status_code:
-        logger.info(response.url, response.json())
+        print(response.text)
         raise Exception('Expected HTTP status code %d but got %d' % (expected_status_code, response.status_code))
 
 cluster_uuid = None
+auth = None
 
-# Elasticsearch Cluster to Send metrics to
+# Elasticsearch Cluster to send metrics to
 monitoringCluster = os.environ.get('ES_METRICS_MONITORING_CLUSTER_URL', 'http://localhost:9200/')
 if not monitoringCluster.endswith("/"):
     monitoringCluster = monitoringCluster + '/'
@@ -77,10 +79,14 @@ numberOfReplicas = os.environ.get('NUMBER_OF_REPLICAS', '1')
 def fetch_cluster_stats(base_url='http://localhost:9200/',health = True,verify=True,cloud_provider = None):
     metric_docs = []
     try:
-        response = requests.get(base_url + '_cluster/health', timeout=(5, 5),verify=verify)
+        response = requests.get(base_url + '_cluster/health', timeout=(5, 5), auth=auth, verify=verify)
         if response.status_code != 200:
-            logger.error("bad response while getting cluster health. response is:\n" + response.json())
-            return metric_docs,None
+            try:
+                error_msg = response.json()
+            except Exception:
+                error_msg = response.text
+            logger.error("bad response while getting cluster health. response is:\n" + error_msg)
+            return metric_docs, None
         cluster_health = response.json()
         utc_datetime = datetime.datetime.utcnow()
         ts = str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
@@ -88,14 +94,14 @@ def fetch_cluster_stats(base_url='http://localhost:9200/',health = True,verify=T
         cluster_health['status_code'] = color_to_level(cluster_health['status'])
         if health:
             metric_docs.append(cluster_health)
-        response = requests.get(base_url + '_cluster/stats', timeout=(5, 5),verify=verify)
+        response = requests.get(base_url + '_cluster/stats', timeout=(5, 5), auth=auth, verify=verify)
         if response.status_code != 200:
             logger.error("bad response while getting cluster stats. response is:\n" + response.json())
             return metric_docs,None
         cluster_stats = response.json()
         # creating cluster stats json
         cluster_stats_and_state = {'type':'cluster_stats','cluster_stats': cluster_stats, 'cluster_name': cluster_stats['cluster_name'], 'timestamp': ts, '@timestamp': cluster_stats['timestamp'],'cluster_uuid':cluster_stats['cluster_uuid'],'cloud_provider':cloud_provider}
-        response = requests.get(base_url + '_cluster/state', timeout=(5, 5),verify=verify)
+        response = requests.get(base_url + '_cluster/state', timeout=(5, 5), auth=auth, verify=verify)
         if response.status_code != 200:
             logger.error("bad response while getting cluster state. response is:\n" + response.json())
             return metric_docs,None
@@ -117,9 +123,13 @@ def fetch_nodes_stats(base_url='http://localhost:9200/',verify=True):
     metric_docs = []
     r_json = None
     try:
-        response = requests.get(base_url + '_nodes/stats', timeout=(5, 5),verify=verify)
+        response = requests.get(base_url + '_nodes/stats', timeout=(5, 5), auth=auth, verify=verify)
         if response.status_code != 200:
-            logger.error("bad response while getting node stats. response is:\n" + response.json())
+            try:
+                error_msg = response.json()
+            except Exception:
+                error_msg = response.text
+            logger.error("bad response while getting node stats. response is:\n" + error_msg)
             return metric_docs
         r_json = response.json()
         cluster_name = r_json['cluster_name']
@@ -235,7 +245,7 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
         utc_datetime = datetime.datetime.utcnow()
         ts = str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
         # getting index stats for all indices
-        response = requests.get(base_url + '_stats', timeout=(5, 5),verify=verify)
+        response = requests.get(base_url + '_stats', timeout=(5, 5), auth=auth, verify=verify)
         if response.status_code != 200:
             logger.error("bad response while getting index stats. response is:\n"+response.json())
             return metric_docs
@@ -243,7 +253,7 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
         # creating index stats json
         indices = index_stats['indices']
         #AWS doesn't accept /_settings
-        response = requests.get(base_url + '*/_settings', timeout=(5, 5), verify=verify)
+        response = requests.get(base_url + '*/_settings', timeout=(5, 5), auth=auth, verify=verify)
         if response.status_code != 200:
             logger.error("bad response while getting index settings. response is:\n" + response.json())
             return metric_docs
@@ -302,8 +312,6 @@ def poll_metrics(cluster_host, monitor, monitor_host,health,verify,auth_token,cl
     cluster_stats, node_stats,index_stats = get_all_data(cluster_host,health,verify,cloud_provider)
     if monitor == 'elasticsearch':
         into_elasticsearch(monitor_host, cluster_stats, node_stats,index_stats,auth_token)
-    elif monitor == 'signalfx':
-        into_signalfx(monitor_host, cluster_stats, node_stats)
 
 
 def get_all_data(cluster_host,health,verify,cloud_provider):
@@ -314,29 +322,6 @@ def get_all_data(cluster_host,health,verify,cloud_provider):
     else:
         index_stats = fetch_index_stats(routing_table,cluster_host,verify)
     return cluster_stats, node_stats,index_stats
-
-
-def into_signalfx(sfx_key, cluster_stats, node_stats):
-    import signalfx
-    sfx = signalfx.SignalFx()
-    ingest = sfx.ingest(sfx_key)
-    for node in node_stats:
-        source_node = node['source_node']
-        for s in node_stats_to_collect:
-            flattened = flatten_json(node['node_stats'][s])
-            for k,v in flattened.items():
-                if isinstance(v, (int, float)) and not isinstance(v, types.BooleanType):
-                    ingest.send(gauges=[{"metric": 'elasticsearch.node.' + s + '.' + k, "value": v,
-                                         "dimensions": {
-                                             'cluster_uuid': node.get('cluster_uuid'),
-                                             'node_name': source_node.get('name'),
-                                             'node_host': source_node.get('host'),
-                                             'node_host': source_node.get('ip'),
-                                             'node_uuid': source_node.get('uuid'),
-                                             'cluster_name': source_node.get('uuid'),
-                                             }
-                                         }])
-    ingest.stop()
 
 def into_elasticsearch(monitor_host, cluster_stats, node_stats,index_stats,auth_token):
     utc_datetime = datetime.datetime.utcnow()
@@ -363,8 +348,7 @@ def into_elasticsearch(monitor_host, cluster_stats, node_stats,index_stats,auth_
                 if item.get("index") and item.get("index").get("status") != 201:
                     click.echo(json.dumps(item.get("index").get("error")))
                     click.echo(cluster_stats_data)
-                else:
-                    click.echo(json.dumps(item.get("index").get("status")))
+            click.echo("[%s] Pushed data successfully" % (time.strftime("%Y-%m-%d %H:%M:%S"),))
         except (requests.exceptions.Timeout, socket.timeout):
             logger.error("[%s] Timeout received while pushing collected metrics to Elasticsearch" % (time.strftime("%Y-%m-%d %H:%M:%S")))
 
@@ -378,14 +362,15 @@ def with_type(o, _type):
 @click.argument('monitor-host', default=monitoringCluster)
 @click.argument('monitor', default='elasticsearch')
 @click.argument('cluster-host', default='http://localhost:9200/')
+@click.option('--username', default=None)
+@click.option('--pwd', default=None)
 @click.option('--interval', default=10, help='Interval (in seconds) to run this')
 @click.option('--index-prefix', default='', help='Index prefix for Elastic monitor')
 @click.option('--generate-templates', default=False)
 @click.option('--health-flag', default=True)
 @click.option('--verify-flag', default=True)
-
-def main(monitor_host, monitor, cluster_host,interval, index_prefix,generate_templates,health_flag,verify_flag ):
-    global cluster_uuid, indexPrefix
+def main(monitor_host, monitor, cluster_host, username, pwd, interval, index_prefix,generate_templates,health_flag,verify_flag ):
+    global cluster_uuid, indexPrefix, auth
     verify = verify_flag == 'True'
     if not verify:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -393,6 +378,8 @@ def main(monitor_host, monitor, cluster_host,interval, index_prefix,generate_tem
     monitored_cluster = os.environ.get('ES_METRICS_CLUSTER_URL', cluster_host)
     auth_token = os.environ.get('ES_METRICS_MONITORING_AUTH_TOKEN')
     cloud_provider = os.environ.get('ES_METRICS_CLOUD_PROVIDER')
+    username = os.environ.get('ES_USERNAME', username)
+    pwd = os.environ.get('ES_PASSWORD', pwd)
     if cloud_provider is not None and cloud_provider not in ['Amazon Elasticsearch','Elastic Cloud']:
         click.echo('supported cloud providers are "Amazon Elasticsearch" and "Elastic Cloud"')
         sys.exit(1)
@@ -410,11 +397,13 @@ def main(monitor_host, monitor, cluster_host,interval, index_prefix,generate_tem
     indexPrefix = index_prefix or indexPrefix
 
     click.echo('[%s] Monitoring %s into %s at %s' % (time.strftime("%Y-%m-%d %H:%M:%S"), monitored_cluster, monitor, monitor_host))
+    if username and pwd:
+        auth = HTTPBasicAuth(username, pwd)
 
     init = False
     while not init:
         try:
-            response = requests.get(random.choice(cluster_hosts), timeout=(5, 5),verify=verify)
+            response = requests.get(random.choice(cluster_hosts), auth=auth, timeout=(5, 5), verify=verify)
             assert_http_status(response)
             cluster_uuid = response.json().get('cluster_uuid')
             init = True
@@ -423,8 +412,6 @@ def main(monitor_host, monitor, cluster_host,interval, index_prefix,generate_tem
                     create_templates()
                 except (requests.exceptions.Timeout, socket.timeout, requests.exceptions.ConnectionError):
                     click.echo("[%s] Timeout received when trying to put template" % (time.strftime("%Y-%m-%d %H:%M:%S")))
-            elif monitor == 'signalfx':
-                import signalfx
         except (requests.exceptions.Timeout, socket.timeout, requests.exceptions.ConnectionError) as e:
             click.echo("[%s] Timeout received on trying to get cluster uuid" % (time.strftime("%Y-%m-%d %H:%M:%S")))
             sys.exit(1)
