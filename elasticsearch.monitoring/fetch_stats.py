@@ -440,7 +440,7 @@ def main(monitor_host, monitor, cluster_host, username, pwd, interval, index_pre
                         time.sleep(timeDiff)
         except requests.exceptions.ConnectionError as e:
             click.echo("[%s] FATAL Connection error %s, quitting" % (time.strftime("%Y-%m-%d %H:%M:%S"), e))
-            sys.exit(1)
+            time.sleep(10)
         except KeyboardInterrupt:
             click.echo('Interrupted')
             try:
