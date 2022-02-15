@@ -272,13 +272,13 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
                 "timestamp": ts ,
                 "@timestamp": ts ,
                 "cluster_uuid": cluster_uuid,
-                "type": "index_stats",
-                "created" : index_settings_ordered[index_name]['settings']['index']['creation_date']
+                "type": "index_stats"
                 }
             index_data['index_stats'] = indices[index_name]
             index_data['index_stats']['index'] = index_name
-
             index_data['index_stats']['shards'] = shards
+            index_data['index_stats']['created'] = \
+                index_settings_ordered[index_name]['settings']['index']['creation_date']
             metric_docs.append(index_data)
             # creating indices stats json
         summary = index_stats["_all"]
