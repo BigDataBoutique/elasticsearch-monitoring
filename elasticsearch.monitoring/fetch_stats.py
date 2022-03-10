@@ -12,6 +12,7 @@ import click
 import requests
 import urllib3
 from requests.auth import HTTPBasicAuth
+from dictor import dictor
 
 logger = logging.getLogger(__name__)
 
@@ -222,6 +223,12 @@ def get_shard_data(routing_table):
                 initializing += 1
             if state == 'RELOCATING':
                 relocating += 1
+    if primaries == 0 or primaries != active_primaries:
+        index_status = 'red'
+    elif replicas != active_replicas:
+        index_status = 'yellow'
+    else:
+        index_status = 'green'
     return {
     'total': primaries + replicas,
     'primaries': primaries,
@@ -235,7 +242,8 @@ def get_shard_data(routing_table):
     'unassigned_replicas': unassigned_replicas,
     'initializing': initializing,
     'relocating': relocating
-    }
+    },index_status
+
 
 # shaig 18.3 - adding data for index stats
 def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=True):
@@ -265,20 +273,29 @@ def fetch_index_stats(routing_table,base_url='http://localhost:9200/',verify=Tru
         routing_table_ordered = dict(sorted(routing_table.items()))
 
         for index_name in indices:
-            shards = get_shard_data(routing_table_ordered[index_name]['shards'])
+            routing_table = routing_table_ordered[index_name]['shards']
+            shards,index_status = get_shard_data(routing_table)
             #logger.info("Building log for index " + index_name)
             # unlike other stats types, @timestamp is based on current time because there is no document timestamp
             index_data = {
                 "timestamp": ts ,
                 "@timestamp": ts ,
                 "cluster_uuid": cluster_uuid,
-                "type": "index_stats",
-                "created" : index_settings_ordered[index_name]['settings']['index']['creation_date']
+                "type": "index_stats"
                 }
             index_data['index_stats'] = indices[index_name]
             index_data['index_stats']['index'] = index_name
-
             index_data['index_stats']['shards'] = shards
+            index_name_escaped = index_name
+            if index_name.startswith("."):
+                index_name_escaped = index_name.replace(".","\.")
+            index_data['index_stats']['created'] = \
+                dictor(index_settings_ordered, index_name_escaped + '.settings.index.creation_date')
+            # hidden is a new proprety from 7.7. Notice it is not identical to system indices
+            hidden =  dictor(index_settings_ordered, index_name_escaped + '.settings.index.hidden')
+            if hidden is not None:
+                index_data['index_stats']['hidden'] = hidden
+            index_data['index_stats']['status'] = index_status
             metric_docs.append(index_data)
             # creating indices stats json
         summary = index_stats["_all"]
@@ -334,6 +351,7 @@ def into_elasticsearch(monitor_host, cluster_stats, node_stats,index_stats,auth_
         index_stats_data = ['{"index":{"_index":"' + index_name + '","_type":"_doc"}}\n' + json.dumps(
             o)  for o in index_stats]
         data += index_stats_data
+
     if len(data) > 0:
         try:
             headers = {'Content-Type': 'application/x-ndjson'}
